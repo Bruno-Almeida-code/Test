@@ -408,7 +408,8 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   text-align: center;
 }
 .caption .dex{ opacity: .6; margin-right: 6px; }
-.poster .caption{ margin-top: 4px; }
+.poster .caption{ margin-top: 2px; }
+.poster .sprite-wrap{ width: 100%; }
 
 
 /* ╔══════════════════════════════════╗
@@ -490,7 +491,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 
 /* --- Core (main sprite) --- */
 .core{
-  padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 1.4) calc(var(--card-pad) * 0.6);
+  padding: calc(var(--card-pad) * 0.2) calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 0.2);
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -565,7 +566,8 @@ img.mini{
 
 /* --- Info (ability, region, description) --- */
 .info{
-  padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 1.6);
+  padding: calc(var(--card-pad) * 1.0) calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 1.4);
+  border-top: 1px solid rgba(0,0,0,0.07);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -594,19 +596,16 @@ img.mini{
 /* --- Type icon badge --- */
 .type-badge{ display: flex; align-items: center; justify-content: center; }
 .type-pill{
-  width: 84px; height: 84px;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-}
-.type-pill img.type-icon{
-  width: 84px; height: 84px;
-  display: block;
+  padding: 4px 14px 2px;
+  border-radius: 7px;
+  font-family: "VT323", ui-monospace, monospace;
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
 
@@ -1074,9 +1073,6 @@ function typeColor(t){
     rock:'#B6A136',ghost:'#735797',dragon:'#6F35FC',dark:'#705746',steel:'#B7B7CE',fairy:'#D685AD'
   })[t] || '#777';
 }
-function typeIconURL(t){
-  return `https://cdn.jsdelivr.net/gh/partywhale/pokemon-type-icons@main/icons/${t}.svg`;
-}
 
 
 // ╔══════════════════════════════════╗
@@ -1103,7 +1099,7 @@ function spriteSize(w, h, style){
 
 // Poster-specific sprite size: fills cell minus caption height, respects pxScale for pixel art
 function posterImgSize(cellW, cellH, style){
-  const captionH = parseInt(v('capPx')) + 10;   // font-size + 4px margin + 6px buffer
+  const captionH = parseInt(v('capPx')) + 4;    // font-size + 2px margin + 2px buffer
   const avail = Math.min(cellW, cellH - captionH);
   if(style !== 'pixel') return Math.floor(avail);
   const base = 96;
@@ -1153,9 +1149,9 @@ async function renderPoster(list){
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
 
-  // Subtract title height (region 4× + gen 2× + padding) before sizing cells
+  // Subtract title height (matches CSS: 80px region + 6px margin + 36px gen + 20+10px padding)
   const capPx  = parseInt(v('capPx'));
-  const titleH = capPx * 6 + 20;
+  const titleH = 152;
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
   setVar('--img', posterImgSize(cellW, cellH, style) + 'px');
@@ -1254,8 +1250,8 @@ async function renderCard(pkId, style, lang, textMode){
   const badge = document.createElement('div'); badge.className = 'type-badge';
   const mainType = pd.types?.[0] || 'normal';
   const pill = document.createElement('div'); pill.className = 'type-pill';
-  pill.innerHTML = `<img class="type-icon" alt="${mainType}" src="${typeIconURL(mainType)}">`;
-  pill.style.color = typeColor(mainType);
+  pill.textContent = mainType.toUpperCase();
+  pill.style.background = typeColor(mainType);
   badge.appendChild(pill);
 
   card.append(head, core, evo, info);
