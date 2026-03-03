@@ -408,6 +408,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   text-align: center;
 }
 .caption .dex{ opacity: .6; margin-right: 6px; }
+.poster .caption{ margin-top: 4px; }
 
 
 /* ╔══════════════════════════════════╗
@@ -1100,9 +1101,10 @@ function spriteSize(w, h, style){
   return base * Math.max(1, k);
 }
 
-// Poster-specific sprite size: fills 85% of each cell, respects pxScale for pixel art
+// Poster-specific sprite size: fills cell minus caption height, respects pxScale for pixel art
 function posterImgSize(cellW, cellH, style){
-  const avail = Math.min(cellW, cellH) * 0.85;
+  const captionH = parseInt(v('capPx')) + 10;   // font-size + 4px margin + 6px buffer
+  const avail = Math.min(cellW, cellH - captionH);
   if(style !== 'pixel') return Math.floor(avail);
   const base = 96;
   if(v('pxScale') === 'auto'){
