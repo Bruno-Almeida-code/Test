@@ -1099,6 +1099,20 @@ function spriteSize(w, h, style){
   }
   return base * Math.max(1, k);
 }
+
+// Poster-specific sprite size: fills 85% of each cell, respects pxScale for pixel art
+function posterImgSize(cellW, cellH, style){
+  const avail = Math.min(cellW, cellH) * 0.85;
+  if(style !== 'pixel') return Math.floor(avail);
+  const base = 96;
+  if(v('pxScale') === 'auto'){
+    const k = el('snapInt').checked ? Math.floor(avail/base) : Math.round(avail/base);
+    return base * Math.max(1, k);
+  }
+  const desired = base * Math.max(1, parseInt(v('pxScale'), 10));
+  return desired <= avail ? desired : base * Math.max(1, Math.floor(avail/base));
+}
+
 function chunk(arr, size){
   const out = [];
   for(let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
@@ -1137,8 +1151,12 @@ async function renderPoster(list){
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
 
-  const img = Math.floor(Math.min((2480-2*pad)/cols, (3508-2*pad)/rows) * 0.68);
-  setVar('--img', img+'px');
+  // Subtract title height (region 4× + gen 2× + padding) before sizing cells
+  const capPx  = parseInt(v('capPx'));
+  const titleH = capPx * 6 + 20;
+  const cellW  = (2480 - 2*pad) / cols;
+  const cellH  = (3508 - 2*pad - titleH) / rows;
+  setVar('--img', posterImgSize(cellW, cellH, style) + 'px');
 
   const root = el('root');
   root.innerHTML = '';
