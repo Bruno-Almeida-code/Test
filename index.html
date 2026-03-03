@@ -6,7 +6,12 @@
 <title>Pokédex Poster + Pokémon Cards Builder</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
 <style>
+
+/* ╔══════════════════════════════════╗
+   ║  1. CSS VARIABLES                ║
+   ╚══════════════════════════════════╝ */
 :root{
+  /* UI chrome */
   --bg: #0c0f16;
   --panel: #14181f;
   --panel2: #10141b;
@@ -20,7 +25,7 @@
   --radius: 10px;
   --zoom: .55;
 
-  /* A4 */
+  /* A4 page at 300 dpi */
   --page-w: 2480px;
   --page-h: 3508px;
 
@@ -32,13 +37,6 @@
   --poster-gap-abs: 0px;
   --poster-name-fz: 18px;
   --poster-name-color: #111;
-  --box-bg: #fff;
-  --box-ink: #000;
-  --box-pad-x: 24px;
-  --box-pad-y: 24px;
-  --box-pad-left: 0px;
-  --p-gap: 12px;
-  --p-pad-bottom: 40px;
 
   /* Cards */
   --pad-cards: 0px;
@@ -51,6 +49,8 @@
   --card-pad: 16px;
   --img: 480px;
   --sprite-shift-y: 0px;
+
+  /* Card: evolution strip */
   --mini: 56px;
   --evo-fill: #eceff3;
   --evo-stroke: #fb923c;
@@ -58,12 +58,16 @@
   --evo-box-scale: 0.8;
   --evo-box-bg: rgba(0,0,0,0.02);
   --evo-box-border: rgba(0,0,0,0.12);
+
+  /* Card: typography */
   --head-fz: 26px;
   --meta-fz: 16px;
   --meta-label-fz: 28px;
   --meta-value-fz: 22px;
   --desc-fz: 14px;
   --meta-gap: 12px;
+
+  /* Card: colors */
   --card-box-bg: #fff;
   --card-box-ink: #000;
 
@@ -71,15 +75,21 @@
   text-rendering: geometricPrecision;
 }
 
-*{ box-sizing: border-box; margin: 0; }
 
+/* ╔══════════════════════════════════╗
+   ║  2. RESET & BASE                 ║
+   ╚══════════════════════════════════╝ */
+*{ box-sizing: border-box; margin: 0; }
 body{
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-/* ===== Layout ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  3. APP LAYOUT                   ║
+   ╚══════════════════════════════════╝ */
 .app{ display: flex; min-height: 100vh; }
 
 .sidebar{
@@ -93,7 +103,6 @@ body{
   flex-direction: column;
   gap: 6px;
 }
-
 .sidebar-header{
   padding: 4px 0 12px;
   border-bottom: 1px solid var(--border);
@@ -109,7 +118,10 @@ body{
 .stage{ transform: scale(var(--zoom)); transform-origin: top left; }
 #root{ display: flex; flex-direction: column; gap: 22px; }
 
-/* ===== Tabs ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  4. TABS                         ║
+   ╚══════════════════════════════════╝ */
 .tabs{
   display: flex;
   gap: 4px;
@@ -135,7 +147,10 @@ body{
   color: var(--accent);
 }
 
-/* ===== Collapsible sections ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  5. COLLAPSIBLE SECTIONS         ║
+   ╚══════════════════════════════════╝ */
 details.section{
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -174,7 +189,10 @@ summary:hover{ color: var(--text); }
 
 .section-body{ padding: 4px 12px 12px; }
 
-/* ===== Form controls ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  6. FORM CONTROLS                ║
+   ╚══════════════════════════════════╝ */
 .row{
   display: flex;
   gap: 8px;
@@ -182,7 +200,6 @@ summary:hover{ color: var(--text); }
   align-items: flex-end;
   margin: 6px 0;
 }
-
 label{
   display: flex;
   flex-direction: column;
@@ -190,7 +207,6 @@ label{
   font: 500 11px/1.3 'Inter', sans-serif;
   color: var(--muted);
 }
-
 input[type="number"], input[type="text"], select, textarea{
   font: 400 13px/1.3 'Inter', sans-serif;
   border-radius: 7px;
@@ -214,7 +230,6 @@ textarea{
   padding: 8px;
   resize: vertical;
 }
-
 input[type="color"]{
   width: 32px; height: 32px;
   border: 1px solid var(--border);
@@ -223,13 +238,15 @@ input[type="color"]{
   cursor: pointer;
   padding: 2px;
 }
-
 input[type="range"]{
   width: 100%;
   accent-color: var(--accent);
 }
 
-/* Toggle switch */
+
+/* ╔══════════════════════════════════╗
+   ║  7. TOGGLE SWITCH                ║
+   ╚══════════════════════════════════╝ */
 .toggle{
   position: relative;
   width: 36px; height: 20px;
@@ -260,7 +277,10 @@ input[type="range"]{
   background: var(--accent);
 }
 
-/* Buttons */
+
+/* ╔══════════════════════════════════╗
+   ║  8. BUTTONS & ACTIONS            ║
+   ╚══════════════════════════════════╝ */
 .actions{ display: flex; gap: 6px; padding: 8px 0; }
 
 .btn{
@@ -289,7 +309,10 @@ input[type="range"]{
 
 small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; margin: 4px 0; }
 
-/* Loading overlay */
+
+/* ╔══════════════════════════════════╗
+   ║  9. LOADING OVERLAY              ║
+   ╚══════════════════════════════════╝ */
 .loading{
   position: fixed;
   top: 12px; right: 12px;
@@ -314,7 +337,10 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 @keyframes spin{ to{ transform: rotate(360deg); } }
 
-/* ===== A4 Page ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  10. A4 PAGE                     ║
+   ╚══════════════════════════════════╝ */
 .page{
   width: var(--page-w);
   height: var(--page-h);
@@ -327,11 +353,32 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 .inner{ width: 100%; height: 100%; }
 
-/* ===== Poster ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  11. POSTER                      ║
+   ╚══════════════════════════════════╝ */
 .poster .inner{
   padding: var(--pad-poster);
   display: flex;
   flex-direction: column;
+}
+.poster-title{
+  text-align: center;
+  font-family: "VT323", ui-monospace, monospace;
+  padding: 20px 0 10px;
+  line-height: 1;
+}
+.poster-title .region{
+  font-size: 80px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #111;
+}
+.poster-title .gen{
+  font-size: 36px;
+  letter-spacing: 2px;
+  color: #555;
+  margin-top: 6px;
 }
 .poster-grid{
   flex: 1;
@@ -362,7 +409,10 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 .caption .dex{ opacity: .6; margin-right: 6px; }
 
-/* ===== Cards ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  12. CARDS GRID                  ║
+   ╚══════════════════════════════════╝ */
 .cards .inner{
   padding: var(--pad-cards);
   width: 100%; height: 100%;
@@ -385,7 +435,12 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   row-gap: calc(var(--card-gap-abs) * -1);
 }
 
-/* ===== Card (single consolidated definition) ===== */
+
+/* ╔══════════════════════════════════╗
+   ║  13. CARD COMPONENT              ║
+   ╚══════════════════════════════════╝ */
+
+/* --- Card shell --- */
 .card{
   width: var(--card-w);
   height: var(--card-h);
@@ -398,7 +453,9 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   display: flex;
   flex-direction: column;
 }
+.placeholder{ visibility: hidden; }
 
+/* --- Head (name + number + type icon) --- */
 .head{
   padding: calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 0.6);
   border: none;
@@ -430,6 +487,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   min-width: 84px;
 }
 
+/* --- Core (main sprite) --- */
 .core{
   padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 1.4) calc(var(--card-pad) * 0.6);
   flex: 1 1 auto;
@@ -438,7 +496,6 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   align-items: center;
   justify-content: center;
 }
-
 .sprite-wrap{
   position: relative;
   width: var(--img);
@@ -458,7 +515,7 @@ img.poke.pixel{
   image-rendering: crisp-edges;
 }
 
-
+/* --- Evolution strip --- */
 .evo-strip{
   padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 1.4) calc(var(--card-pad) * 0.6);
   display: flex;
@@ -505,6 +562,7 @@ img.mini{
   border-top: 2px solid rgba(0,0,0,0.35);
 }
 
+/* --- Info (ability, region, description) --- */
 .info{
   padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 1.6);
   display: flex;
@@ -532,7 +590,7 @@ img.mini{
   font-style: italic;
 }
 
-/* Type icon */
+/* --- Type icon badge --- */
 .type-badge{ display: flex; align-items: center; justify-content: center; }
 .type-pill{
   width: 84px; height: 84px;
@@ -550,7 +608,12 @@ img.mini{
   display: block;
 }
 
-/* Typography: auto mode */
+
+/* ╔══════════════════════════════════╗
+   ║  14. CARD TYPOGRAPHY             ║
+   ╚══════════════════════════════════╝ */
+
+/* Auto mode: scales with card height */
 .card[data-text="auto"]{
   --auto-name: clamp(26px, calc(var(--card-h) * 0.050), 72px);
   --auto-num:  clamp(16px, calc(var(--card-h) * 0.026), 44px);
@@ -563,19 +626,19 @@ img.mini{
 .card[data-text="auto"] .meta{ font-size: var(--auto-meta); }
 .card[data-text="auto"] .desc{ font-size: var(--auto-desc); }
 
-/* Typography: manual mode */
+/* Manual mode: user-controlled px values */
 .card[data-text="manual"] .head{ font-size: var(--head-fz); }
 .card[data-text="manual"] .head .bold{ font-size: var(--head-fz); }
 .card[data-text="manual"] .head .num{ font-size: calc(var(--head-fz) * 0.58); }
 .card[data-text="manual"] .meta{ font-size: var(--meta-fz); }
 .card[data-text="manual"] .desc{ font-size: var(--desc-fz); }
 
-.placeholder{ visibility: hidden; }
 
-/* Export */
+/* ╔══════════════════════════════════╗
+   ║  15. PRINT & EXPORT              ║
+   ╚══════════════════════════════════╝ */
 body[data-exporting="1"] .stage{ transform: none !important; }
 
-/* Print */
 @media print{
   @page{ size: A4; margin: 5mm; }
   html, body{ margin: 0; padding: 0; background: #fff; }
@@ -596,10 +659,13 @@ body[data-exporting="1"] .stage{ transform: none !important; }
   }
   *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
 </style>
 </head>
 
 <body data-mode="cards">
+
+<!-- ══════ LOADING INDICATOR ══════ -->
 <div id="loadingIndicator" class="loading">
   <div class="spinner"></div>
   <span>Building...</span>
@@ -607,6 +673,8 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
 <div class="app">
   <aside class="sidebar">
+
+    <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
     <div class="sidebar-header">
       <h1>Pokédex Builder</h1>
     </div>
@@ -616,7 +684,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       <button class="tab" data-mode="cards">Cards</button>
     </div>
 
-    <!-- Dataset & Look -->
+    <!-- ══════ DATASET & LOOK ══════ -->
     <details class="section" open>
       <summary>Dataset & Look</summary>
       <div class="section-body">
@@ -676,7 +744,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       </div>
     </details>
 
-    <!-- Poster settings -->
+    <!-- ══════ POSTER SETTINGS ══════ -->
     <details class="section" id="posterPanel">
       <summary>Poster Settings</summary>
       <div class="section-body">
@@ -690,16 +758,10 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
           <label>Caption color <input id="capColor" type="color" value="#111111"></label>
         </div>
-        <input id="boxBg" type="hidden" value="#ffffff">
-        <input id="boxInk" type="hidden" value="#000000">
-        <input id="padX" type="hidden" value="24">
-        <input id="padY" type="hidden" value="24">
-        <input id="pGap" type="hidden" value="12">
-        <input id="pPadB" type="hidden" value="40">
       </div>
     </details>
 
-    <!-- Cards Grid -->
+    <!-- ══════ CARDS: GRID ══════ -->
     <details class="section" id="cardsPanel" open>
       <summary>Cards Grid (3×3)</summary>
       <div class="section-body">
@@ -712,7 +774,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       </div>
     </details>
 
-    <!-- Paging -->
+    <!-- ══════ CARDS: PAGING ══════ -->
     <details class="section" id="pagingPanel">
       <summary>Paging</summary>
       <div class="section-body">
@@ -732,7 +794,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       </div>
     </details>
 
-    <!-- Card Layout -->
+    <!-- ══════ CARDS: LAYOUT ══════ -->
     <details class="section" id="layoutPanel">
       <summary>Card Layout</summary>
       <div class="section-body">
@@ -760,7 +822,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       </div>
     </details>
 
-    <!-- Typography -->
+    <!-- ══════ CARDS: TYPOGRAPHY ══════ -->
     <details class="section" id="typoPanel">
       <summary>Typography</summary>
       <div class="section-body">
@@ -789,15 +851,17 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       </div>
     </details>
 
-    <!-- Actions -->
+    <!-- ══════ ACTION BUTTONS ══════ -->
     <div class="actions">
       <button class="btn" id="buildBtn">Build</button>
       <button class="btn primary" id="printBtn">Print / PDF</button>
       <button class="btn" id="downloadBtn">Download PNG</button>
     </div>
     <small>After building, use the print dialog to select specific pages.</small>
+
   </aside>
 
+  <!-- ══════ STAGE (preview area) ══════ -->
   <main class="stage-wrap">
     <div class="stage">
       <div id="root"></div>
@@ -807,11 +871,18 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+
+// ╔══════════════════════════════════╗
+// ║  1. UTILITIES                    ║
+// ╚══════════════════════════════════╝
 const el = id => document.getElementById(id);
 const v  = id => el(id).value;
 const setVar = (k, val) => document.documentElement.style.setProperty(k, val);
 
-// ===== API Cache =====
+
+// ╔══════════════════════════════════╗
+// ║  2. API CACHE                    ║
+// ╚══════════════════════════════════╝
 const apiCache = new Map();
 async function cachedFetch(url){
   if(apiCache.has(url)) return apiCache.get(url);
@@ -821,18 +892,25 @@ async function cachedFetch(url){
   return j;
 }
 
-// ===== Loading indicator =====
+
+// ╔══════════════════════════════════╗
+// ║  3. LOADING / DEBOUNCE           ║
+// ╚══════════════════════════════════╝
 const loader = el('loadingIndicator');
 let buildCount = 0;
 function showLoading(){ buildCount++; loader.classList.add('show'); }
 function hideLoading(){ buildCount--; if(buildCount<=0){ buildCount=0; loader.classList.remove('show'); } }
 
-// ===== Debounce =====
 let buildTimer = null;
 function debouncedBuild(){
   clearTimeout(buildTimer);
   buildTimer = setTimeout(build, 300);
 }
+
+
+// ╔══════════════════════════════════╗
+// ║  4. TABS & UI SYNC               ║
+// ╚══════════════════════════════════╝
 
 // Pixel scale options
 (() => {
@@ -844,7 +922,7 @@ function debouncedBuild(){
   }
 })();
 
-// ===== Tabs =====
+// Mode tabs
 const MODE = {
   get: () => document.body.dataset.mode || 'poster',
   set: m => {
@@ -853,7 +931,6 @@ const MODE = {
       t.classList.toggle('active', t.dataset.mode === m)
     );
     el('posterPanel').style.display = (m==='poster') ? '' : 'none';
-    // Show cards-specific panels only in cards mode
     ['cardsPanel','pagingPanel','layoutPanel','typoPanel'].forEach(id => {
       el(id).style.display = (m==='cards') ? '' : 'none';
     });
@@ -864,7 +941,7 @@ document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => MODE.set(b.dataset.mode))
 );
 
-// ===== UI sync =====
+// Paging toggle
 function syncCardsPagingUI(){
   const evo = v('cardsPaging') === 'evolution';
   el('evoBatchRow').style.display = evo ? 'flex' : 'none';
@@ -882,7 +959,21 @@ el('textMode').addEventListener('input', () => { syncTextModeUI(); build(); });
 syncCardsPagingUI();
 syncTextModeUI();
 
-// ===== Data helpers =====
+
+// ╔══════════════════════════════════╗
+// ║  5. DATA HELPERS                  ║
+// ╚══════════════════════════════════╝
+
+const GEN_REGIONS = {
+  1:'KANTO', 2:'JOHTO', 3:'HOENN', 4:'SINNOH', 5:'UNOVA',
+  6:'KALOS', 7:'ALOLA', 8:'GALAR', 9:'PALDEA', all:'ALL REGIONS'
+};
+const API_GEN_TO_REGION = {
+  'generation-i':'KANTO','generation-ii':'JOHTO','generation-iii':'HOENN',
+  'generation-iv':'SINNOH','generation-v':'UNOVA','generation-vi':'KALOS',
+  'generation-vii':'ALOLA','generation-viii':'GALAR','generation-ix':'PALDEA'
+};
+
 function titleName(n){ return n.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
 
 async function genSpecies(gen){
@@ -956,7 +1047,10 @@ async function resolveListFromIds(ids){
   }));
 }
 
-// ===== Assets =====
+
+// ╔══════════════════════════════════╗
+// ║  6. ASSETS                        ║
+// ╚══════════════════════════════════╝
 function artURL(id, style){
   if(style === 'pixel') return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
   if(style === 'home')  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
@@ -972,7 +1066,6 @@ function spriteWrap(url, style){
   wrap.appendChild(img);
   return wrap;
 }
-
 function typeColor(t){
   return ({
     normal:'#A8A77A',fire:'#EE8130',water:'#6390F0',electric:'#F7D02C',grass:'#7AC74C',ice:'#96D9D6',
@@ -984,7 +1077,10 @@ function typeIconURL(t){
   return `https://cdn.jsdelivr.net/gh/partywhale/pokemon-type-icons@main/icons/${t}.svg`;
 }
 
-// ===== Layout math =====
+
+// ╔══════════════════════════════════╗
+// ║  7. LAYOUT MATH                   ║
+// ╚══════════════════════════════════╝
 function cardDims(cols, rows, pad, gap){
   const W = 2480-2*pad, H = 3508-2*pad, AR = 87/56, g = Math.max(gap, 0);
   let w = (W - g*(cols-1)) / cols, h = w * AR;
@@ -1003,7 +1099,6 @@ function spriteSize(w, h, style){
   }
   return base * Math.max(1, k);
 }
-
 function chunk(arr, size){
   const out = [];
   for(let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
@@ -1025,7 +1120,10 @@ async function buildChainsFromList(list){
   return [...chainMap.values()].sort((a,b) => (a.ids[0]||99999) - (b.ids[0]||99999));
 }
 
-// ===== Render Poster =====
+
+// ╔══════════════════════════════════╗
+// ║  8. RENDER: POSTER                ║
+// ╚══════════════════════════════════╝
 async function renderPoster(list){
   const cols = +v('posterCols'), rows = +v('posterRows'), gap = +v('posterGap'), pad = +v('posterPad');
   const style = v('style');
@@ -1038,12 +1136,6 @@ async function renderPoster(list){
 
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
-  setVar('--box-bg', v('boxBg'));
-  setVar('--box-ink', v('boxInk'));
-  setVar('--box-pad-x', v('padX')+'px');
-  setVar('--box-pad-y', v('padY')+'px');
-  setVar('--p-gap', v('pGap')+'px');
-  setVar('--p-pad-bottom', v('pPadB')+'px');
 
   const img = Math.floor(Math.min((2480-2*pad)/cols, (3508-2*pad)/rows) * 0.68);
   setVar('--img', img+'px');
@@ -1053,6 +1145,16 @@ async function renderPoster(list){
 
   const page = document.createElement('div'); page.className = 'page poster';
   const inner = document.createElement('div'); inner.className = 'inner';
+
+  // Title: KANTO (big) + GEN1 (smaller)
+  const gen = v('gen');
+  const region = GEN_REGIONS[gen] || 'REGION';
+  const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
+
+  const title = document.createElement('div'); title.className = 'poster-title';
+  title.innerHTML = `<div class="region">${region}</div><div class="gen">${genLabel}</div>`;
+
+  // Grid
   const grid = document.createElement('div');
   grid.className = 'poster-grid' + (gap<0 ? ' neg-gap' : '');
 
@@ -1065,13 +1167,17 @@ async function renderPoster(list){
     grid.appendChild(cell);
   });
 
+  inner.appendChild(title);
   inner.appendChild(grid);
   page.appendChild(inner);
   root.appendChild(page);
   await preloadImages(page);
 }
 
-// ===== Render Card =====
+
+// ╔══════════════════════════════════╗
+// ║  9. RENDER: CARD + CARDS          ║
+// ╚══════════════════════════════════╝
 async function renderCard(pkId, style, lang, textMode){
   const sp = await speciesById(pkId);
   const pd = await pokemonData(pkId).catch(() => ({types:[], abilities:[]}));
@@ -1116,12 +1222,7 @@ async function renderCard(pkId, style, lang, textMode){
   const meta = document.createElement('div'); meta.className = 'meta';
 
   const abilitiesStr = (pd.abilities||[]).filter(Boolean).join(', ') || '\u2014';
-  const regMap = {
-    'generation-i':'KANTO','generation-ii':'JOHTO','generation-iii':'HOENN',
-    'generation-iv':'SINNOH','generation-v':'UNOVA','generation-vi':'KALOS',
-    'generation-vii':'ALOLA','generation-viii':'GALAR','generation-ix':'PALDEA'
-  };
-  const region = regMap[sp.generation] || 'REGION';
+  const region = API_GEN_TO_REGION[sp.generation] || 'REGION';
   meta.innerHTML = `<div><b>Ability:</b> <span class="meta-val">${abilitiesStr}</span></div><div><b>Region:</b> <span class="meta-val">${region}</span></div>`;
 
   const desc = document.createElement('div'); desc.className = 'desc';
@@ -1219,7 +1320,10 @@ async function renderCards(list){
   }
 }
 
-// ===== Build =====
+
+// ╔══════════════════════════════════╗
+// ║  10. BUILD ORCHESTRATOR           ║
+// ╚══════════════════════════════════╝
 async function build(){
   showLoading();
   try{
@@ -1242,10 +1346,13 @@ async function build(){
   }
 }
 
-// ===== Wire up inputs =====
+
+// ╔══════════════════════════════════╗
+// ║  11. EVENT WIRING                 ║
+// ╚══════════════════════════════════╝
 [
   'gen','style','pxScale','snapInt','lang','zoom','specificIds',
-  'posterCols','posterRows','posterGap','posterPad','capPx','capColor','boxBg','boxInk','padX','padY','pGap','pPadB',
+  'posterCols','posterRows','posterGap','posterPad','capPx','capColor',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
@@ -1273,8 +1380,12 @@ el('downloadBtn').addEventListener('click', async () => {
 
 el('buildBtn').addEventListener('click', build);
 
-// Init
+
+// ╔══════════════════════════════════╗
+// ║  12. INIT                         ║
+// ╚══════════════════════════════════╝
 MODE.set('cards');
+
 </script>
 </body>
 </html>
