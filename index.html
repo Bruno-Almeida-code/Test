@@ -486,12 +486,12 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  min-width: 84px;
+  min-width: 56px;
 }
 
 /* --- Core (main sprite) --- */
 .core{
-  padding: calc(var(--card-pad) * 0.2) calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 0.2);
+  padding: 0;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -594,18 +594,41 @@ img.mini{
 }
 
 /* --- Type icon badge --- */
-.type-badge{ display: flex; align-items: center; justify-content: center; }
-.type-pill{
-  display: inline-flex;
+.type-badge{ display: flex; align-items: flex-start; justify-content: flex-end; }
+.type-icon-wrap{
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 4px 14px 2px;
-  border-radius: 7px;
+  gap: 4px;
+}
+.type-icon-wrap svg{
+  width: 44px; height: 44px;
+  display: block;
+}
+.type-name-tag{
   font-family: "VT323", ui-monospace, monospace;
-  font-size: 20px;
-  letter-spacing: 1.5px;
+  font-size: 16px;
+  letter-spacing: 1px;
   line-height: 1;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+/* --- Ability pills --- */
+.ab-list{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+.ab-tag{
+  background: rgba(0,0,0,0.07);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: var(--meta-value-fz);
+  line-height: 1.4;
+}
+.ab-tag.ab-hidden{
+  opacity: 0.5;
+  font-style: italic;
 }
 
 
@@ -891,6 +914,17 @@ async function cachedFetch(url){
   apiCache.set(url, j);
   return j;
 }
+async function fetchTypeIcon(t){
+  const key = 'svg:'+t;
+  if(apiCache.has(key)) return apiCache.get(key);
+  try{
+    const r = await fetch(`https://cdn.jsdelivr.net/gh/partywhale/pokemon-type-icons@main/icons/${t}.svg`);
+    if(!r.ok) return null;
+    const txt = await r.text();
+    apiCache.set(key, txt);
+    return txt;
+  }catch{ return null; }
+}
 
 
 // ╔══════════════════════════════════╗
@@ -1000,8 +1034,8 @@ async function pokemonData(id){
   const j = await cachedFetch(`https://pokeapi.co/api/v2/pokemon/${id}/`);
   return {
     types: j.types.map(t => t.type.name),
-    abilities: j.abilities.sort((a,b) => a.is_hidden - b.is_hidden)
-      .map(a => titleName(a.ability.name))
+    abilities: j.abilities.sort((a,b) => a.slot - b.slot)
+      .map(a => ({ name: titleName(a.ability.name), hidden: a.is_hidden }))
   };
 }
 function flavorFromRaw(raw, lang){
@@ -1085,7 +1119,7 @@ function cardDims(cols, rows, pad, gap){
   return { w: Math.floor(w), h: Math.floor(h) };
 }
 function spriteSize(w, h, style){
-  if(style !== 'pixel') return Math.floor(Math.min(w,h) * 0.72);
+  if(style !== 'pixel') return Math.floor(Math.min(w,h) * 0.88);
   const base = 96;
   let k;
   if(v('pxScale') === 'auto'){
@@ -1237,22 +1271,42 @@ async function renderCard(pkId, style, lang, textMode){
   const info = document.createElement('div'); info.className = 'info';
   const meta = document.createElement('div'); meta.className = 'meta';
 
-  const abilitiesStr = (pd.abilities||[]).filter(Boolean).join(', ') || '\u2014';
   const region = API_GEN_TO_REGION[sp.generation] || 'REGION';
-  meta.innerHTML = `<div><b>Ability:</b> <span class="meta-val">${abilitiesStr}</span></div><div><b>Region:</b> <span class="meta-val">${region}</span></div>`;
+  const abTags = (pd.abilities||[]).slice(0,4).map(a =>
+    `<span class="ab-tag${a.hidden ? ' ab-hidden' : ''}">${a.name}</span>`
+  ).join('');
+  meta.innerHTML = `<div><b>Abilities</b><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div><div><b>Region:</b> <span class="meta-val">${region}</span></div>`;
 
   const desc = document.createElement('div'); desc.className = 'desc';
   desc.textContent = sp._raw ? flavorFromRaw(sp._raw, lang) : '';
 
   info.append(meta, desc);
 
-  // Type badge
+  // Type badge: inline SVG symbol (no circle) + name tag below
   const badge = document.createElement('div'); badge.className = 'type-badge';
   const mainType = pd.types?.[0] || 'normal';
-  const pill = document.createElement('div'); pill.className = 'type-pill';
-  pill.textContent = mainType.toUpperCase();
-  pill.style.background = typeColor(mainType);
-  badge.appendChild(pill);
+  const iconColor = typeColor(mainType);
+  const iconWrap = document.createElement('div'); iconWrap.className = 'type-icon-wrap';
+  const svgText = await fetchTypeIcon(mainType);
+  if(svgText){
+    const tmp = document.createElement('div');
+    tmp.innerHTML = svgText;
+    const svg = tmp.querySelector('svg');
+    if(svg){
+      svg.querySelector('circle')?.remove();
+      svg.querySelectorAll('[fill]').forEach(el => {
+        if(el.getAttribute('fill') !== 'none') el.setAttribute('fill', iconColor);
+      });
+      svg.setAttribute('fill', iconColor);
+      svg.style.cssText = 'width:44px;height:44px;display:block;';
+      iconWrap.appendChild(svg);
+    }
+  }
+  const nameTag = document.createElement('div'); nameTag.className = 'type-name-tag';
+  nameTag.textContent = mainType.toUpperCase();
+  nameTag.style.color = iconColor;
+  iconWrap.appendChild(nameTag);
+  badge.appendChild(iconWrap);
 
   card.append(head, core, evo, info);
   head.querySelector('.right').appendChild(badge);
