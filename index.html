@@ -459,7 +459,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 
 /* --- Head (name + number + type icon) --- */
 .head{
-  padding: calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 0.6);
+  padding: calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.6);
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
@@ -477,8 +477,8 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 .head .num{
   display: block;
-  margin-top: 10px;
-  font-size: 20px;
+  margin-top: 8px;
+  font-size: 28px;
   opacity: .7;
 }
 .head .right{
@@ -491,11 +491,11 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 
 /* --- Core (main sprite) --- */
 .core{
-  padding: 0;
+  padding: 8px 0 0;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 .sprite-wrap{
@@ -519,7 +519,7 @@ img.poke.pixel{
 
 /* --- Evolution strip --- */
 .evo-strip{
-  padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 1.4) calc(var(--card-pad) * 0.6);
+  padding: calc(var(--card-pad) * 0.6) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -566,7 +566,7 @@ img.mini{
 
 /* --- Info (ability, region, description) --- */
 .info{
-  padding: calc(var(--card-pad) * 1.0) calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 1.4);
+  padding: calc(var(--card-pad) * 1.0) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 1.4);
   border-top: 1px solid rgba(0,0,0,0.07);
   display: flex;
   flex-direction: column;
@@ -602,12 +602,20 @@ img.mini{
   gap: 4px;
 }
 .type-icon-wrap svg{
-  width: 44px; height: 44px;
+  width: 56px; height: 56px;
   display: block;
+}
+.type-icon-fallback{
+  width: 56px; height: 56px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-family: "VT323", ui-monospace, monospace;
+  font-size: 30px;
 }
 .type-name-tag{
   font-family: "VT323", ui-monospace, monospace;
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: 1px;
   line-height: 1;
 }
@@ -639,7 +647,7 @@ img.mini{
 /* Auto mode: scales with card height */
 .card[data-text="auto"]{
   --auto-name: clamp(26px, calc(var(--card-h) * 0.050), 72px);
-  --auto-num:  clamp(16px, calc(var(--card-h) * 0.026), 44px);
+  --auto-num:  clamp(20px, calc(var(--card-h) * 0.038), 52px);
   --auto-meta: clamp(14px, calc(var(--card-h) * 0.024), 34px);
   --auto-desc: clamp(12px, calc(var(--card-h) * 0.020), 28px);
 }
@@ -1288,19 +1296,27 @@ async function renderCard(pkId, style, lang, textMode){
   const iconColor = typeColor(mainType);
   const iconWrap = document.createElement('div'); iconWrap.className = 'type-icon-wrap';
   const svgText = await fetchTypeIcon(mainType);
+  let svgInserted = false;
   if(svgText){
-    const tmp = document.createElement('div');
-    tmp.innerHTML = svgText;
-    const svg = tmp.querySelector('svg');
-    if(svg){
-      svg.querySelector('circle')?.remove();
-      svg.querySelectorAll('[fill]').forEach(el => {
-        if(el.getAttribute('fill') !== 'none') el.setAttribute('fill', iconColor);
-      });
-      svg.setAttribute('fill', iconColor);
-      svg.style.cssText = 'width:44px;height:44px;display:block;';
-      iconWrap.appendChild(svg);
-    }
+    try{
+      const svgDoc = (new DOMParser()).parseFromString(svgText, 'image/svg+xml');
+      const svgEl = svgDoc.documentElement;
+      if(svgEl.tagName.toLowerCase() === 'svg' && !svgEl.querySelector('parsererror')){
+        // Inject CSS: hide circle background, color all symbol paths with type color
+        const st = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
+        st.textContent = `circle{display:none!important}path,polygon,polyline,ellipse,rect{fill:${iconColor}!important}`;
+        svgEl.insertBefore(st, svgEl.firstChild);
+        svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
+        svgEl.style.cssText = 'display:block;flex-shrink:0;';
+        iconWrap.appendChild(document.importNode(svgEl, true));
+        svgInserted = true;
+      }
+    }catch(_){}
+  }
+  if(!svgInserted){
+    const fb = document.createElement('div'); fb.className = 'type-icon-fallback';
+    fb.textContent = mainType[0].toUpperCase(); fb.style.background = iconColor;
+    iconWrap.appendChild(fb);
   }
   const nameTag = document.createElement('div'); nameTag.className = 'type-name-tag';
   nameTag.textContent = mainType.toUpperCase();
@@ -1325,7 +1341,8 @@ async function renderCards(list){
   else { setVar('--card-gap','0px'); setVar('--card-gap-abs', Math.abs(gap)+'px'); }
   setVar('--card-pad', cardPad+'px');
   setVar('--sprite-shift-y', v('spriteY')+'px');
-  setVar('--mini', v('miniSize')+'px');
+  const baseMini = +v('miniSize') || 56;
+  setVar('--mini', Math.round(dims.w * (baseMini / 760)) + 'px');
 
   const evoOn = el('evoBoxOn').checked;
   const evoScale = parseFloat(el('evoBoxScale').value) || 0.8;
@@ -1404,6 +1421,9 @@ async function build(){
     let list;
     if(ids.length){
       list = await resolveListFromIds(ids);
+    } else if(MODE.get() === 'cards'){
+      el('root').innerHTML = '';
+      return;
     } else {
       const gen = v('gen');
       list = (gen==='all') ? await allSpecies() : await genSpecies(gen);
