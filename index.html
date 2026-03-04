@@ -416,8 +416,8 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 .poster .caption{
   position: absolute;
-  top: var(--cap-offset-y, 0px);
-  left: var(--cap-offset-x, 0px);
+  top: calc(50% - var(--cap-offset-y, 0px));
+  left: calc(50% - var(--cap-offset-x, 0px));
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1305,11 +1305,11 @@ async function renderPoster(list){
     if(!multiRegion && pi === 0){
       const title = document.createElement('div'); title.className = 'poster-title';
       title.innerHTML = `
+        <div class="title-main">${genLabel}&nbsp;&nbsp;|&nbsp;&nbsp;${region}</div>
         <div class="title-desc">
           <span>${descLine1}</span>
           <span>${descLine2}</span>
-        </div>
-        <div class="title-main">${genLabel}&nbsp;&nbsp;|&nbsp;&nbsp;${region}</div>`;
+        </div>`;
       inner.appendChild(title);
     }
 
