@@ -33,8 +33,10 @@
   --pad-poster: 10px;
   --poster-cols: 9;
   --poster-rows: 13;
-  --poster-gap: 0px;
-  --poster-gap-abs: 0px;
+  --poster-col-gap: 0px;
+  --poster-row-gap: 0px;
+  --poster-neg-col: 20px;
+  --poster-neg-row: 20px;
   --poster-name-fz: 18px;
   --poster-name-color: #111;
 
@@ -64,7 +66,7 @@
   --meta-fz: 16px;
   --meta-label-fz: 36px;
   --meta-value-fz: 22px;
-  --desc-fz: 30px;
+  --desc-fz: 36px;
   --meta-gap: 12px;
 
   /* Card: colors */
@@ -385,14 +387,8 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   display: grid;
   grid-template-columns: repeat(var(--poster-cols), 1fr);
   grid-template-rows: repeat(var(--poster-rows), 1fr);
-  gap: var(--poster-gap);
-}
-.poster-grid.neg-gap{
-  gap: 0;
-}
-.poster-grid.neg-gap .cell{
-  margin: calc(var(--poster-gap-abs) / -2);
-  z-index: 1;
+  column-gap: var(--poster-col-gap, 0px);
+  row-gap: var(--poster-row-gap, 0px);
 }
 .poster .cell{
   display: flex;
@@ -401,6 +397,10 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   justify-content: center;
   position: relative;
   overflow: visible;
+  margin-left:   calc(var(--poster-neg-col, 0px) * -0.5);
+  margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
+  margin-top:    calc(var(--poster-neg-row, 0px) * -0.5);
+  margin-bottom: calc(var(--poster-neg-row, 0px) * -0.5);
 }
 .caption{
   margin-top: 6px;
@@ -466,7 +466,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   position: absolute;
   top: 0; left: 0; right: 0;
   z-index: 2;
-  padding: calc(var(--card-pad) * 1.5) calc(var(--card-pad) * 1.5) calc(var(--card-pad) * 0.3);
+  padding: calc(var(--card-pad) * 1.5) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.3);
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
@@ -798,9 +798,9 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             <label>Cols <input id="posterCols" type="number" value="9" min="1" max="20"></label>
             <label>Rows <input id="posterRows" type="number" value="13" min="1" max="60"></label>
           </div>
-          <label>Gap <input id="posterGap" type="number" value="0" min="-60" max="60"></label>
+          <label>Gap X px <input id="posterGapX" type="number" value="-20" min="-300" max="200" step="1"></label>
+          <label>Gap Y px <input id="posterGapY" type="number" value="-20" min="-300" max="200" step="1"></label>
           <label>Padding <input id="posterPad" type="number" value="10" min="0" max="200"></label>
-          <label>Sprite gap px <input id="posterSpriteGap" type="number" value="0" min="-300" max="200" step="1"></label>
         </div>
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
@@ -885,7 +885,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row" id="manualTextRow" style="display:none">
           <label>Name px <input id="cHead" type="number" value="68" min="10" max="120"></label>
           <label>Meta px <input id="cMeta" type="number" value="32" min="10" max="60"></label>
-          <label>Desc px <input id="cDesc" type="number" value="30" min="10" max="50"></label>
+          <label>Desc px <input id="cDesc" type="number" value="36" min="10" max="50"></label>
           <label>Meta gap <input id="metaGap" type="number" value="12" min="0" max="60"></label>
         </div>
         <div class="row" id="manualTextRow2" style="display:none">
@@ -1224,12 +1224,14 @@ async function buildChainsFromList(list){
 // ╚══════════════════════════════════╝
 async function renderPoster(list){
   let cols = +v('posterCols'), rows = +v('posterRows');
-  const gap = +v('posterGap'), pad = +v('posterPad');
+  const gapX = +v('posterGapX'), gapY = +v('posterGapY'), pad = +v('posterPad');
   const style = v('style');
 
   setVar('--pad-poster', pad+'px');
-  if(gap >= 0){ setVar('--poster-gap', gap+'px'); setVar('--poster-gap-abs','0px'); }
-  else { setVar('--poster-gap','0px'); setVar('--poster-gap-abs', Math.abs(gap)+'px'); }
+  if(gapX >= 0){ setVar('--poster-col-gap', gapX+'px'); setVar('--poster-neg-col','0px'); }
+  else { setVar('--poster-col-gap','0px'); setVar('--poster-neg-col', Math.abs(gapX)+'px'); }
+  if(gapY >= 0){ setVar('--poster-row-gap', gapY+'px'); setVar('--poster-neg-row','0px'); }
+  else { setVar('--poster-row-gap','0px'); setVar('--poster-neg-row', Math.abs(gapY)+'px'); }
 
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
@@ -1251,8 +1253,7 @@ async function renderPoster(list){
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  const spriteGap = parseFloat(v('posterSpriteGap')) || 0;
-  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW, cellH, style) - spriteGap)) + 'px');
+  setVar('--img', posterImgSize(cellW, cellH, style) + 'px');
 
   const root = el('root');
   root.innerHTML = '';
@@ -1272,7 +1273,7 @@ async function renderPoster(list){
 
   // Grid
   const grid = document.createElement('div');
-  grid.className = 'poster-grid' + (gap<0 ? ' neg-gap' : '');
+  grid.className = 'poster-grid';
 
   list.slice(0, cols*rows).forEach(pk => {
     const cell = document.createElement('div'); cell.className = 'cell';
@@ -1503,7 +1504,7 @@ async function build(){
 // ╚══════════════════════════════════╝
 [
   'gen','style','pxScale','snapInt','lang','zoom','specificIds',
-  'posterCols','posterRows','posterBestFit','posterGap','posterPad','posterSpriteGap','capPx','capColor',
+  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad','capPx','capColor',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
