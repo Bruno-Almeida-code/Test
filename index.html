@@ -1168,7 +1168,8 @@ function spriteSize(w, h, style){
 
 // Poster-specific sprite size: fills cell minus caption height, respects pxScale for pixel art
 function posterImgSize(cellW, cellH, style){
-  const captionH = parseInt(v('capPx')) + 4;    // font-size + 2px margin + 2px buffer
+  const showCap = el('posterShowCaption').checked;
+  const captionH = showCap ? parseInt(v('capPx')) + 4 : 0;
   const avail = Math.min(cellW, cellH - captionH);
   if(style !== 'pixel') return Math.floor(avail);
   const base = 96;
@@ -1179,7 +1180,7 @@ function posterImgSize(cellW, cellH, style){
   const desired = base * Math.max(1, parseInt(v('pxScale'), 10));
   return desired <= avail ? desired : base * Math.max(1, Math.floor(avail/base));
 }
-function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true){
+function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true, overlapX=0, overlapY=0){
   const W = 2480 - 2*pad;
   const H = 3508 - 2*pad - titleH;
   const captionH = showCaption ? capPx + 4 : 0;
@@ -1188,7 +1189,7 @@ function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true){
     const rows = Math.ceil(n / cols);
     const cellW = W / cols;
     const cellH = H / rows;
-    const avail = Math.min(cellW, cellH - captionH);
+    const avail = Math.min(cellW + overlapX, cellH - captionH + overlapY);
     if(avail <= 0) continue;
     const size = (style === 'pixel')
       ? 96 * Math.max(1, Math.floor(avail / 96))
@@ -1245,16 +1246,19 @@ async function renderPoster(list){
   // Title height: 0 when hidden (saves space for grid)
   const capPx  = parseInt(v('capPx'));
   const titleH = multiRegion ? 0 : 152;
+  const overlapX = gapX < 0 ? Math.abs(gapX) : 0;
+  const overlapY = gapY < 0 ? Math.abs(gapY) : 0;
 
   if(el('posterBestFit').checked && list.length){
-    ({ cols, rows } = bestFitLayout(list.length, pad, titleH, capPx, style, el('posterShowCaption').checked));
+    ({ cols, rows } = bestFitLayout(list.length, pad, titleH, capPx, style,
+      el('posterShowCaption').checked, overlapX, overlapY));
   }
   setVar('--poster-cols', cols);
   setVar('--poster-rows', rows);
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW, cellH, style))) + 'px');
+  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW + overlapX, cellH + overlapY, style))) + 'px');
 
   const showCaption = el('posterShowCaption').checked;
   const root = el('root');
