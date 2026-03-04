@@ -353,6 +353,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   overflow: hidden;
   position: relative;
 }
+.page.poster{ overflow: visible; }
 .inner{ width: 100%; height: 100%; }
 
 
@@ -411,7 +412,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   text-align: center;
 }
 .caption .dex{ opacity: .6; margin-right: 6px; }
-.poster .caption{ margin-top: 2px; }
+.poster .caption{ margin-top: calc(2px + var(--cap-offset-y, 0px)); }
 
 
 /* ╔══════════════════════════════════╗
@@ -799,6 +800,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
           <label>Caption color <input id="capColor" type="color" value="#111111"></label>
+          <label>Caption offset <input id="capOffsetY" type="number" value="0" min="-400" max="200" step="1"></label>
           <label style="flex-direction:row;gap:8px;align-items:center">
             <div class="toggle">
               <input id="posterShowCaption" type="checkbox" checked>
@@ -1237,6 +1239,7 @@ async function renderPoster(list){
 
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
+  setVar('--cap-offset-y', v('capOffsetY')+'px');
 
   // Detect multi-region: custom IDs spanning >1 generation, or gen=all
   const gen = v('gen');
@@ -1520,7 +1523,7 @@ async function build(){
 // ╚══════════════════════════════════╝
 [
   'gen','style','pxScale','snapInt','zoom','specificIds',
-  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad','capPx','capColor','posterShowCaption',
+  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad','capPx','capColor','capOffsetY','posterShowCaption',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
