@@ -366,22 +366,27 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   flex-direction: column;
 }
 .poster-title{
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-family: "VT323", ui-monospace, monospace;
-  padding: 20px 0 10px;
+  padding: 10px 20px;
   line-height: 1;
 }
-.poster-title .region{
-  font-size: 80px;
+.poster-title .title-desc{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--poster-name-fz, 18px);
+  color: #555;
+  text-align: left;
+}
+.poster-title .title-main{
+  font-size: 72px;
   font-weight: 800;
   letter-spacing: 4px;
   color: #111;
-}
-.poster-title .gen{
-  font-size: 36px;
-  letter-spacing: 2px;
-  color: #555;
-  margin-top: 6px;
+  white-space: nowrap;
 }
 .poster-grid{
   flex: 1;
@@ -404,15 +409,23 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
 }
 .caption{
-  margin-top: 6px;
   font-family: "VT323", ui-monospace, monospace;
   font-size: var(--poster-name-fz);
   color: var(--poster-name-color);
   line-height: 1;
-  text-align: center;
 }
-.caption .dex{ opacity: .6; margin-right: 6px; }
-.poster .caption{ margin-top: calc(2px + var(--cap-offset-y, 0px)); }
+.poster .caption{
+  position: absolute;
+  top: var(--cap-offset-y, 0px);
+  left: var(--cap-offset-x, 0px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  z-index: 2;
+}
+.poster .caption .cap-nm{ display: block; }
+.poster .caption .cap-dex{ display: block; opacity: .6; }
 
 
 /* ╔══════════════════════════════════╗
@@ -800,7 +813,8 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
           <label>Caption color <input id="capColor" type="color" value="#111111"></label>
-          <label>Caption offset <input id="capOffsetY" type="number" value="0" min="-400" max="200" step="1"></label>
+          <label>Offset X <input id="capOffsetX" type="number" value="0" min="-400" max="400" step="1"></label>
+          <label>Offset Y <input id="capOffsetY" type="number" value="0" min="-400" max="400" step="1"></label>
           <label style="flex-direction:row;gap:8px;align-items:center">
             <div class="toggle">
               <input id="posterShowCaption" type="checkbox" checked>
@@ -808,6 +822,10 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             </div>
             Show names
           </label>
+        </div>
+        <div class="row">
+          <label style="flex:1">Description line 1 <input id="posterDesc1" type="text" placeholder="e.g. My Collection" style="width:100%"></label>
+          <label style="flex:1">Description line 2 <input id="posterDesc2" type="text" placeholder="e.g. 2025 Edition" style="width:100%"></label>
         </div>
       </div>
     </details>
@@ -1240,6 +1258,7 @@ async function renderPoster(list){
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
   setVar('--cap-offset-y', v('capOffsetY')+'px');
+  setVar('--cap-offset-x', v('capOffsetX')+'px');
 
   // Detect multi-region: custom IDs spanning >1 generation, or gen=all
   const gen = v('gen');
@@ -1248,7 +1267,7 @@ async function renderPoster(list){
 
   // Title height: 0 when hidden (saves space for grid)
   const capPx  = parseInt(v('capPx'));
-  const titleH = multiRegion ? 0 : 152;
+  const titleH = multiRegion ? 0 : 100;
   const overlapX = gapX < 0 ? Math.abs(gapX) : 0;
   const overlapY = gapY < 0 ? Math.abs(gapY) : 0;
 
@@ -1267,9 +1286,11 @@ async function renderPoster(list){
   const root = el('root');
   root.innerHTML = '';
 
-  // Title: KANTO (big) + GEN1 (smaller) — hidden when multiple regions
+  // Title: description (left, 2 lines) + GEN # | REGION (right) — hidden when multiple regions
   const region = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
+  const descLine1 = v('posterDesc1');
+  const descLine2 = v('posterDesc2');
 
   // Chunk list into pages
   const pageSize = cols * rows;
@@ -1283,7 +1304,12 @@ async function renderPoster(list){
 
     if(!multiRegion && pi === 0){
       const title = document.createElement('div'); title.className = 'poster-title';
-      title.innerHTML = `<div class="region">${region}</div><div class="gen">${genLabel}</div>`;
+      title.innerHTML = `
+        <div class="title-desc">
+          <span>${descLine1}</span>
+          <span>${descLine2}</span>
+        </div>
+        <div class="title-main">${genLabel}&nbsp;&nbsp;|&nbsp;&nbsp;${region}</div>`;
       inner.appendChild(title);
     }
 
@@ -1296,7 +1322,7 @@ async function renderPoster(list){
       cell.appendChild(spriteWrap(artURL(pk.id, style), style));
       if(showCaption){
         const cap = document.createElement('div'); cap.className = 'caption';
-        cap.innerHTML = `<span class="dex">#${String(pk.id).padStart(3,'0')}</span><span class="nm">${pk.name}</span>`;
+        cap.innerHTML = `<span class="cap-nm">${pk.name}</span><span class="cap-dex">#${String(pk.id).padStart(3,'0')}</span>`;
         cell.appendChild(cap);
       }
       grid.appendChild(cell);
@@ -1523,7 +1549,8 @@ async function build(){
 // ╚══════════════════════════════════╝
 [
   'gen','style','pxScale','snapInt','zoom','specificIds',
-  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad','capPx','capColor','capOffsetY','posterShowCaption',
+  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
+  'capPx','capColor','capOffsetX','capOffsetY','posterShowCaption','posterDesc1','posterDesc2',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
