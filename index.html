@@ -459,7 +459,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 
 /* --- Head (name + number + type icon) --- */
 .head{
-  padding: calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.6);
+  padding: calc(var(--card-pad) * 1.6) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.2);
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
@@ -491,7 +491,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 
 /* --- Core (main sprite) --- */
 .core{
-  padding: 8px 0 0;
+  padding: 0;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -602,20 +602,20 @@ img.mini{
   gap: 4px;
 }
 .type-icon-wrap svg{
-  width: 56px; height: 56px;
+  width: 76px; height: 76px;
   display: block;
 }
 .type-icon-fallback{
-  width: 56px; height: 56px;
+  width: 76px; height: 76px;
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   color: #fff;
   font-family: "VT323", ui-monospace, monospace;
-  font-size: 30px;
+  font-size: 38px;
 }
 .type-name-tag{
   font-family: "VT323", ui-monospace, monospace;
-  font-size: 18px;
+  font-size: 22px;
   letter-spacing: 1px;
   line-height: 1;
 }
@@ -771,6 +771,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <label style="width:100%">Custom IDs (optional)
             <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
           </label>
+          <button id="randomIdsBtn" title="Pick 9 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 Random</button>
         </div>
       </div>
     </details>
@@ -1405,7 +1406,8 @@ async function renderCards(list){
       }
     }
   } else {
-    for(const pageIds of chunk(list.map(x=>x.id), perPage)){
+    const chunks = chunk(list.map(x=>x.id), perPage);
+    for(const pageIds of (chunks.length ? chunks : [[]])){
       await renderPage(pageIds);
     }
   }
@@ -1426,8 +1428,7 @@ async function build(){
     if(ids.length){
       list = await resolveListFromIds(ids);
     } else if(MODE.get() === 'cards'){
-      el('root').innerHTML = '';
-      return;
+      list = [];
     } else {
       const gen = v('gen');
       list = (gen==='all') ? await allSpecies() : await genSpecies(gen);
@@ -1451,6 +1452,13 @@ async function build(){
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
 ].forEach(id => el(id).addEventListener('input', debouncedBuild));
+
+el('randomIdsBtn').addEventListener('click', () => {
+  const picks = new Set();
+  while(picks.size < 9) picks.add(Math.floor(Math.random() * 1010) + 1);
+  el('specificIds').value = [...picks].join(', ');
+  debouncedBuild();
+});
 
 el('printBtn').addEventListener('click', async () => {
   await readyFonts();
