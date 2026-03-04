@@ -581,20 +581,21 @@ img.mini{
   color: rgba(0,0,0,0.72);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 16px;
 }
 .meta b{
   color: rgba(0,0,0,0.88);
   font-size: var(--meta-label-fz);
   font-family: "VT323", ui-monospace, monospace;
 }
-.meta .meta-val{ font-size: var(--meta-value-fz); font-family: "VT323", ui-monospace, monospace; }
+.meta .meta-val{ font-size: var(--meta-label-fz); font-family: "VT323", ui-monospace, monospace; }
 .desc{
   display: block;
-  line-height: 1.4;
+  line-height: 1.3;
   color: rgba(0,0,0,0.72);
   overflow: hidden;
-  font-style: italic;
+  font-family: "VT323", ui-monospace, monospace;
+  font-size: var(--desc-fz);
   flex: 1 1 auto;
 }
 
@@ -1329,7 +1330,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
   const abTags = (pd.abilities||[]).slice(0,4).map(a =>
     `<span class="ab-tag${a.hidden ? ' ab-hidden' : ''}">${a.name}</span>`
   ).join('');
-  meta.innerHTML = `<div><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div>${showRegion ? `<div><b>Region:</b> <span class="meta-val">${region}</span></div>` : ''}`;
+  meta.innerHTML = `<div><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div><div><b>Region:</b> <span class="meta-val">${region}</span></div>`;
 
   const desc = document.createElement('div'); desc.className = 'desc';
   desc.textContent = sp._raw ? flavorFromRaw(sp._raw, lang) : '';
@@ -1415,7 +1416,6 @@ async function renderCards(list){
   setVar('--img', imgSz+'px');
 
   const gens = new Set(list.map(x => x.generation).filter(Boolean));
-  const showRegion = gens.size <= 1;
 
   const perPage = cols * rows;
   const root = el('root');
@@ -1428,7 +1428,7 @@ async function renderCards(list){
     grid.className = 'grid' + (gap<0 ? ' neg-gap' : '');
 
     for(const id of pageIds){
-      grid.appendChild(await renderCard(id, style, lang, textMode, showRegion));
+      grid.appendChild(await renderCard(id, style, lang, textMode, true));
     }
     for(let k = 0; k < perPage - pageIds.length; k++){
       const ph = document.createElement('div'); ph.className = 'card placeholder';
