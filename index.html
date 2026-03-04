@@ -46,7 +46,7 @@
   --card-gap-abs: 0px;
   --card-w: 760px;
   --card-h: 980px;
-  --card-pad: 16px;
+  --card-pad: 24px;
   --img: 480px;
   --sprite-shift-y: 0px;
 
@@ -496,7 +496,6 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   padding: 0;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: 55%;
   overflow: hidden;
   display: flex;
   align-items: flex-start;
@@ -808,7 +807,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <input id="cardRows" type="hidden" value="3">
         <div class="row">
           <label>Gap <input id="cardGap" type="number" value="12" min="-60" max="120"></label>
-          <label>Padding <input id="cardsPad" type="number" value="0" min="0" max="200"></label>
+          <label>Padding <input id="cardsPad" type="number" value="40" min="0" max="200"></label>
         </div>
       </div>
     </details>
@@ -838,7 +837,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       <summary>Card Layout</summary>
       <div class="section-body">
         <div class="row">
-          <label>Card padding <input id="cardPad" type="number" value="16" min="0" max="120"></label>
+          <label>Card padding <input id="cardPad" type="number" value="24" min="0" max="120"></label>
           <label>Sprite Y offset <input id="spriteY" type="number" value="0" min="-600" max="600"></label>
           <label>Evo sprite size <input id="miniSize" type="number" value="150" min="20" max="160"></label>
         </div>
