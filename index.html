@@ -1053,11 +1053,20 @@ async function pokemonData(id){
 }
 function flavorFromRaw(raw, lang){
   const pref = (lang==='pt') ? ['pt-BR','pt','en'] : ['en'];
+  const entries = [...(raw.flavor_text_entries||[])].reverse(); // newest game versions first
   for(const L of pref){
-    const hit = raw.flavor_text_entries.find(ft => ft.language?.name === L);
+    const hit = entries.find(ft => ft.language?.name === L);
     if(hit) return hit.flavor_text.replace(/\f|\n/g,' ').replace(/\s+/g,' ').trim();
   }
   return '';
+}
+function localName(raw, lang){
+  const pref = (lang==='pt') ? ['pt-BR','pt','en'] : ['en'];
+  for(const L of pref){
+    const hit = (raw.names||[]).find(n => n.language?.name === L);
+    if(hit) return titleName(hit.name);
+  }
+  return titleName(raw.name);
 }
 async function evoLine(url){
   if(!url) return [];
@@ -1257,7 +1266,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
 
   // Head
   const head = document.createElement('div'); head.className = 'head';
-  head.innerHTML = `<div class="line"><div><div class="bold">${sp.name.toUpperCase()}</div><div class="num">No.${String(pkId).padStart(3,'0')}</div></div><div class="right"></div></div>`;
+  head.innerHTML = `<div class="line"><div><div class="bold">${localName(sp._raw, lang).toUpperCase()}</div><div class="num">No.${String(pkId).padStart(3,'0')}</div></div><div class="right"></div></div>`;
 
   // Core
   const core = document.createElement('div'); core.className = 'core';
