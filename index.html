@@ -63,7 +63,7 @@
   --head-fz: 26px;
   --meta-fz: 16px;
   --meta-label-fz: 36px;
-  --meta-value-fz: 36px;
+  --meta-value-fz: 22px;
   --desc-fz: 30px;
   --meta-gap: 12px;
 
@@ -400,6 +400,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: visible;
 }
 .caption{
   margin-top: 6px;
@@ -641,6 +642,7 @@ img.mini{
   border-radius: 5px;
   padding: 3px 9px;
   font-size: var(--meta-value-fz);
+  font-family: "VT323", ui-monospace, monospace;
   line-height: 1.4;
 }
 .ab-tag.ab-hidden{
@@ -798,6 +800,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           </div>
           <label>Gap <input id="posterGap" type="number" value="0" min="-60" max="60"></label>
           <label>Padding <input id="posterPad" type="number" value="10" min="0" max="200"></label>
+          <label>Sprite scale % <input id="posterImgScale" type="number" value="100" min="50" max="300" step="5"></label>
         </div>
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
@@ -887,7 +890,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         </div>
         <div class="row" id="manualTextRow2" style="display:none">
           <label>Label size <input id="metaLabelSize" type="number" value="36" min="10" max="60"></label>
-          <label>Value size <input id="metaValueSize" type="number" value="36" min="10" max="60"></label>
+          <label>Value size <input id="metaValueSize" type="number" value="22" min="10" max="60"></label>
         </div>
         <div class="row">
           <label>Card bg <input id="cardBoxBg" type="color" value="#ffffff"></label>
@@ -1248,7 +1251,8 @@ async function renderPoster(list){
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  setVar('--img', posterImgSize(cellW, cellH, style) + 'px');
+  const imgScale = (parseFloat(v('posterImgScale')) || 100) / 100;
+  setVar('--img', Math.floor(posterImgSize(cellW, cellH, style) * imgScale) + 'px');
 
   const root = el('root');
   root.innerHTML = '';
@@ -1499,7 +1503,7 @@ async function build(){
 // ╚══════════════════════════════════╝
 [
   'gen','style','pxScale','snapInt','lang','zoom','specificIds',
-  'posterCols','posterRows','posterBestFit','posterGap','posterPad','capPx','capColor',
+  'posterCols','posterRows','posterBestFit','posterGap','posterPad','posterImgScale','capPx','capColor',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
