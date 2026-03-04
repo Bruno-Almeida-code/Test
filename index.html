@@ -46,7 +46,7 @@
   --card-gap-abs: 0px;
   --card-w: 760px;
   --card-h: 980px;
-  --card-pad: 24px;
+  --card-pad: 40px;
   --img: 480px;
   --sprite-shift-y: 0px;
 
@@ -522,7 +522,7 @@ img.poke.pixel{
 
 /* --- Evolution strip --- */
 .evo-strip{
-  padding: calc(var(--card-pad) * 0.25) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.25);
+  padding: calc(var(--card-pad) * 0.1) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,7 +569,7 @@ img.mini{
 
 /* --- Info (ability, region, description) --- */
 .info{
-  padding: calc(var(--card-pad) * 0.5) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.8);
+  padding: calc(var(--card-pad) * 0.2) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.8);
   border-top: 1px solid rgba(0,0,0,0.07);
   display: flex;
   flex-direction: column;
@@ -807,7 +807,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <input id="cardRows" type="hidden" value="3">
         <div class="row">
           <label>Gap <input id="cardGap" type="number" value="12" min="-60" max="120"></label>
-          <label>Padding <input id="cardsPad" type="number" value="40" min="0" max="200"></label>
+          <label>Padding <input id="cardsPad" type="number" value="0" min="0" max="200"></label>
         </div>
       </div>
     </details>
@@ -837,7 +837,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       <summary>Card Layout</summary>
       <div class="section-body">
         <div class="row">
-          <label>Card padding <input id="cardPad" type="number" value="24" min="0" max="120"></label>
+          <label>Card padding <input id="cardPad" type="number" value="40" min="0" max="120"></label>
           <label>Sprite Y offset <input id="spriteY" type="number" value="0" min="-600" max="600"></label>
           <label>Evo sprite size <input id="miniSize" type="number" value="150" min="20" max="160"></label>
         </div>
@@ -1143,7 +1143,7 @@ function cardDims(cols, rows, pad, gap){
   return { w: Math.floor(w), h: Math.floor(h) };
 }
 function spriteSize(w, h, style){
-  if(style !== 'pixel') return Math.floor(Math.min(w,h) * 0.88);
+  if(style !== 'pixel') return Math.floor(Math.min(w * 0.88, h * 0.45));
   const base = 96;
   let k;
   if(v('pxScale') === 'auto'){
