@@ -30,7 +30,7 @@
   --page-h: 3508px;
 
   /* Poster */
-  --pad-poster: 20px;
+  --pad-poster: 10px;
   --poster-cols: 9;
   --poster-rows: 13;
   --poster-gap: 0px;
@@ -456,15 +456,20 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 .placeholder{ visibility: hidden; }
 
 /* --- Head (name + number + type icon) --- */
 .head{
-  padding: calc(var(--card-pad) * 1.0) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.1);
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: calc(var(--card-pad) * 0.7) calc(var(--card-pad) * 1.4) calc(var(--card-pad) * 0.5);
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.82) 60%, transparent);
 }
 .head .line{
   display: flex;
@@ -498,7 +503,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   min-height: 0;
   overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 .sprite-wrap{
@@ -787,11 +792,13 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       <summary>Poster Settings</summary>
       <div class="section-body">
         <div class="row">
-          <label>Cols <input id="posterCols" type="number" value="9" min="1" max="20"></label>
-          <label>Rows <input id="posterRows" type="number" value="13" min="1" max="60"></label>
-          <label style="align-self:center"><input id="posterBestFit" type="checkbox"> Best fit</label>
+          <label style="align-self:center"><input id="posterBestFit" type="checkbox" checked> Best fit</label>
+          <div id="posterGridSizeWrap" style="display:none; gap:8px">
+            <label>Cols <input id="posterCols" type="number" value="9" min="1" max="20"></label>
+            <label>Rows <input id="posterRows" type="number" value="13" min="1" max="60"></label>
+          </div>
           <label>Gap <input id="posterGap" type="number" value="0" min="-60" max="60"></label>
-          <label>Padding <input id="posterPad" type="number" value="20" min="0" max="200"></label>
+          <label>Padding <input id="posterPad" type="number" value="10" min="0" max="200"></label>
         </div>
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
@@ -1144,7 +1151,7 @@ function cardDims(cols, rows, pad, gap){
   return { w: Math.floor(w), h: Math.floor(h) };
 }
 function spriteSize(w, h, style){
-  if(style !== 'pixel') return Math.floor(Math.min(w * 0.88, h * 0.45));
+  if(style !== 'pixel') return Math.floor(Math.min(w * 0.88, h * 0.65));
   const base = 96;
   let k;
   if(v('pxScale') === 'auto'){
@@ -1498,6 +1505,13 @@ async function build(){
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
 ].forEach(id => el(id).addEventListener('input', debouncedBuild));
+
+function syncBestFitUI(){
+  const on = el('posterBestFit').checked;
+  el('posterGridSizeWrap').style.display = on ? 'none' : 'contents';
+}
+el('posterBestFit').addEventListener('change', syncBestFitUI);
+syncBestFitUI();
 
 el('randomIdsBtn').addEventListener('click', () => {
   const picks = new Set();
