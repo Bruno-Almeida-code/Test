@@ -389,8 +389,10 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 .poster-grid.neg-gap{
   gap: 0;
-  column-gap: calc(var(--poster-gap-abs) * -1);
-  row-gap: calc(var(--poster-gap-abs) * -1);
+}
+.poster-grid.neg-gap .cell{
+  margin: calc(var(--poster-gap-abs) / -2);
+  z-index: 1;
 }
 .poster .cell{
   display: flex;
@@ -492,7 +494,10 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 /* --- Core (main sprite) --- */
 .core{
   padding: 0;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 55%;
+  overflow: hidden;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -570,7 +575,7 @@ img.mini{
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   overflow: hidden;
 }
 .meta{
