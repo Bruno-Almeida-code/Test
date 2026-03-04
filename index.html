@@ -368,25 +368,31 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 .poster-title{
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 20px;
   font-family: "VT323", ui-monospace, monospace;
-  padding: 10px 20px;
+  padding: 16px 20px;
   line-height: 1;
 }
-.poster-title .title-desc{
+.poster-title .title-main{
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 72px;
+  letter-spacing: 2px;
+}
+.poster-title .gen-label{ color: #888; }
+.poster-title .title-sep{ color: #bbb; padding: 0 6px; }
+.poster-title .reg-label{ color: #111; font-weight: 800; }
+.poster-title .title-desc-wrap{
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  height: 72px;
   font-size: var(--poster-name-fz, 18px);
-  color: #555;
+  color: #888;
   text-align: left;
-}
-.poster-title .title-main{
-  font-size: 72px;
-  font-weight: 800;
-  letter-spacing: 4px;
-  color: #111;
-  white-space: nowrap;
+  padding: 4px 0;
 }
 .poster-grid{
   flex: 1;
@@ -813,8 +819,8 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
           <label>Caption color <input id="capColor" type="color" value="#111111"></label>
-          <label>Offset X <input id="capOffsetX" type="number" value="0" min="-400" max="400" step="1"></label>
-          <label>Offset Y <input id="capOffsetY" type="number" value="0" min="-400" max="400" step="1"></label>
+          <label>Offset X <input id="capOffsetX" type="number" value="100" min="-400" max="400" step="1"></label>
+          <label>Offset Y <input id="capOffsetY" type="number" value="100" min="-400" max="400" step="1"></label>
           <label style="flex-direction:row;gap:8px;align-items:center">
             <div class="toggle">
               <input id="posterShowCaption" type="checkbox" checked>
@@ -822,10 +828,21 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             </div>
             Show names
           </label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterShowTitle" type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </div>
+            Show title
+          </label>
         </div>
         <div class="row">
           <label style="flex:1">Description line 1 <input id="posterDesc1" type="text" placeholder="e.g. My Collection" style="width:100%"></label>
           <label style="flex:1">Description line 2 <input id="posterDesc2" type="text" placeholder="e.g. 2025 Edition" style="width:100%"></label>
+        </div>
+        <div class="row">
+          <label>Random count <input id="posterRandomCount" type="number" value="168" min="1" max="1010"></label>
+          <button id="posterRandomBtn" style="align-self:flex-end;margin-bottom:2px">🎲 Random poster</button>
         </div>
       </div>
     </details>
@@ -1267,7 +1284,7 @@ async function renderPoster(list){
 
   // Title height: 0 when hidden (saves space for grid)
   const capPx  = parseInt(v('capPx'));
-  const titleH = multiRegion ? 0 : 100;
+  const titleH = (!multiRegion && showTitle) ? 100 : 0;
   const overlapX = gapX < 0 ? Math.abs(gapX) : 0;
   const overlapY = gapY < 0 ? Math.abs(gapY) : 0;
 
@@ -1283,10 +1300,11 @@ async function renderPoster(list){
   setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW + overlapX, cellH + overlapY, style))) + 'px');
 
   const showCaption = el('posterShowCaption').checked;
+  const showTitle = el('posterShowTitle').checked;
   const root = el('root');
   root.innerHTML = '';
 
-  // Title: description (left, 2 lines) + GEN # | REGION (right) — hidden when multiple regions
+  // Title data
   const region = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
   const descLine1 = v('posterDesc1');
@@ -1302,18 +1320,7 @@ async function renderPoster(list){
     const page = document.createElement('div'); page.className = 'page poster';
     const inner = document.createElement('div'); inner.className = 'inner';
 
-    if(!multiRegion && pi === 0){
-      const title = document.createElement('div'); title.className = 'poster-title';
-      title.innerHTML = `
-        <div class="title-main">${genLabel}&nbsp;&nbsp;|&nbsp;&nbsp;${region}</div>
-        <div class="title-desc">
-          <span>${descLine1}</span>
-          <span>${descLine2}</span>
-        </div>`;
-      inner.appendChild(title);
-    }
-
-    // Grid
+    // Grid first (title goes at bottom)
     const grid = document.createElement('div');
     grid.className = 'poster-grid';
 
@@ -1329,6 +1336,22 @@ async function renderPoster(list){
     });
 
     inner.appendChild(grid);
+
+    // Title at bottom-center (first page only, single-region, when shown)
+    if(!multiRegion && pi === 0 && showTitle){
+      const title = document.createElement('div'); title.className = 'poster-title';
+      title.innerHTML = `
+        <div class="title-main">
+          <span class="gen-label">${genLabel}</span>
+          <span class="title-sep">|</span>
+          <span class="reg-label">${region}</span>
+        </div>
+        <div class="title-desc-wrap">
+          <span>${descLine1}</span>
+          <span>${descLine2}</span>
+        </div>`;
+      inner.appendChild(title);
+    }
     page.appendChild(inner);
     root.appendChild(page);
     await preloadImages(page);
@@ -1550,7 +1573,7 @@ async function build(){
 [
   'gen','style','pxScale','snapInt','zoom','specificIds',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
-  'capPx','capColor','capOffsetX','capOffsetY','posterShowCaption','posterDesc1','posterDesc2',
+  'capPx','capColor','capOffsetX','capOffsetY','posterShowCaption','posterShowTitle','posterDesc1','posterDesc2','posterRandomCount',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
@@ -1562,6 +1585,14 @@ function syncBestFitUI(){
 }
 el('posterBestFit').addEventListener('change', syncBestFitUI);
 syncBestFitUI();
+
+el('posterRandomBtn').addEventListener('click', () => {
+  const n = Math.min(1010, Math.max(1, parseInt(v('posterRandomCount')) || 168));
+  const picks = new Set();
+  while(picks.size < n) picks.add(Math.floor(Math.random() * 1010) + 1);
+  el('specificIds').value = [...picks].sort((a,b)=>a-b).join(', ');
+  debouncedBuild();
+});
 
 el('randomIdsBtn').addEventListener('click', () => {
   const picks = new Set();
