@@ -35,6 +35,8 @@
   --poster-rows: 13;
   --poster-row-gap: 0px;
   --poster-neg-row: 20px;
+  --poster-col-gap: 0px;
+  --poster-neg-col: 20px;
   --poster-name-fz: 18px;
   --poster-name-color: #111;
 
@@ -386,6 +388,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   grid-template-columns: repeat(var(--poster-cols), 1fr);
   grid-template-rows: repeat(var(--poster-rows), 1fr);
   row-gap: var(--poster-row-gap, 0px);
+  column-gap: var(--poster-col-gap, 0px);
 }
 .poster .cell{
   display: flex;
@@ -396,6 +399,8 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   overflow: visible;
   margin-top:    calc(var(--poster-neg-row, 0px) * -0.5);
   margin-bottom: calc(var(--poster-neg-row, 0px) * -0.5);
+  margin-left:   calc(var(--poster-neg-col, 0px) * -0.5);
+  margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
 }
 .caption{
   margin-top: 6px;
@@ -751,12 +756,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <label>Pixel scale
             <select id="pxScale"><option value="auto" selected>Auto</option></select>
           </label>
-          <label>Language
-            <select id="lang">
-              <option value="en" selected>EN</option>
-              <option value="pt">PT</option>
-            </select>
-          </label>
+
         </div>
         <div class="row" style="align-items:center">
           <label style="flex-direction:row;gap:8px;align-items:center">
@@ -799,6 +799,13 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
           <label>Caption color <input id="capColor" type="color" value="#111111"></label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterShowCaption" type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </div>
+            Show names
+          </label>
         </div>
       </div>
     </details>
@@ -1172,10 +1179,10 @@ function posterImgSize(cellW, cellH, style){
   const desired = base * Math.max(1, parseInt(v('pxScale'), 10));
   return desired <= avail ? desired : base * Math.max(1, Math.floor(avail/base));
 }
-function bestFitLayout(n, pad, titleH, capPx, style){
+function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true){
   const W = 2480 - 2*pad;
   const H = 3508 - 2*pad - titleH;
-  const captionH = capPx + 4;
+  const captionH = showCaption ? capPx + 4 : 0;
   let bestSize = 0, bestCols = 1, bestRows = n;
   for(let cols = 1; cols <= n; cols++){
     const rows = Math.ceil(n / cols);
@@ -1224,6 +1231,8 @@ async function renderPoster(list){
   setVar('--pad-poster', pad+'px');
   if(gapY >= 0){ setVar('--poster-row-gap', gapY+'px'); setVar('--poster-neg-row','0px'); }
   else { setVar('--poster-row-gap','0px'); setVar('--poster-neg-row', Math.abs(gapY)+'px'); }
+  if(gapX >= 0){ setVar('--poster-col-gap', gapX+'px'); setVar('--poster-neg-col','0px'); }
+  else { setVar('--poster-col-gap','0px'); setVar('--poster-neg-col', Math.abs(gapX)+'px'); }
 
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
@@ -1238,48 +1247,59 @@ async function renderPoster(list){
   const titleH = multiRegion ? 0 : 152;
 
   if(el('posterBestFit').checked && list.length){
-    ({ cols, rows } = bestFitLayout(list.length, pad, titleH, capPx, style));
+    ({ cols, rows } = bestFitLayout(list.length, pad, titleH, capPx, style, el('posterShowCaption').checked));
   }
   setVar('--poster-cols', cols);
   setVar('--poster-rows', rows);
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW, cellH, style) - gapX)) + 'px');
+  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW, cellH, style))) + 'px');
 
+  const showCaption = el('posterShowCaption').checked;
   const root = el('root');
   root.innerHTML = '';
-
-  const page = document.createElement('div'); page.className = 'page poster';
-  const inner = document.createElement('div'); inner.className = 'inner';
 
   // Title: KANTO (big) + GEN1 (smaller) — hidden when multiple regions
   const region = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
 
-  if(!multiRegion){
-    const title = document.createElement('div'); title.className = 'poster-title';
-    title.innerHTML = `<div class="region">${region}</div><div class="gen">${genLabel}</div>`;
-    inner.appendChild(title);
+  // Chunk list into pages
+  const pageSize = cols * rows;
+  const chunks = [];
+  for(let i = 0; i < list.length; i += pageSize) chunks.push(list.slice(i, i + pageSize));
+  if(!chunks.length) chunks.push([]);
+
+  for(let pi = 0; pi < chunks.length; pi++){
+    const page = document.createElement('div'); page.className = 'page poster';
+    const inner = document.createElement('div'); inner.className = 'inner';
+
+    if(!multiRegion && pi === 0){
+      const title = document.createElement('div'); title.className = 'poster-title';
+      title.innerHTML = `<div class="region">${region}</div><div class="gen">${genLabel}</div>`;
+      inner.appendChild(title);
+    }
+
+    // Grid
+    const grid = document.createElement('div');
+    grid.className = 'poster-grid';
+
+    chunks[pi].forEach(pk => {
+      const cell = document.createElement('div'); cell.className = 'cell';
+      cell.appendChild(spriteWrap(artURL(pk.id, style), style));
+      if(showCaption){
+        const cap = document.createElement('div'); cap.className = 'caption';
+        cap.innerHTML = `<span class="dex">#${String(pk.id).padStart(3,'0')}</span><span class="nm">${pk.name}</span>`;
+        cell.appendChild(cap);
+      }
+      grid.appendChild(cell);
+    });
+
+    inner.appendChild(grid);
+    page.appendChild(inner);
+    root.appendChild(page);
+    await preloadImages(page);
   }
-
-  // Grid
-  const grid = document.createElement('div');
-  grid.className = 'poster-grid';
-
-  list.slice(0, cols*rows).forEach(pk => {
-    const cell = document.createElement('div'); cell.className = 'cell';
-    cell.appendChild(spriteWrap(artURL(pk.id, style), style));
-    const cap = document.createElement('div'); cap.className = 'caption';
-    cap.innerHTML = `<span class="dex">#${String(pk.id).padStart(3,'0')}</span><span class="nm">${pk.name}</span>`;
-    cell.appendChild(cap);
-    grid.appendChild(cell);
-  });
-
-  inner.appendChild(grid);
-  page.appendChild(inner);
-  root.appendChild(page);
-  await preloadImages(page);
 }
 
 
@@ -1380,7 +1400,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
 
 async function renderCards(list){
   const cols = +v('cardCols'), rows = +v('cardRows'), gap = +v('cardGap'), pad = +v('cardsPad');
-  const cardPad = +v('cardPad'), style = v('style'), lang = v('lang');
+  const cardPad = +v('cardPad'), style = v('style'), lang = 'en';
   const paging = v('cardsPaging'), textMode = v('textMode');
 
   setVar('--pad-cards', pad+'px');
@@ -1495,8 +1515,8 @@ async function build(){
 // ║  11. EVENT WIRING                 ║
 // ╚══════════════════════════════════╝
 [
-  'gen','style','pxScale','snapInt','lang','zoom','specificIds',
-  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad','capPx','capColor',
+  'gen','style','pxScale','snapInt','zoom','specificIds',
+  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad','capPx','capColor','posterShowCaption',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
