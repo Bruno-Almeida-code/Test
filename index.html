@@ -466,7 +466,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   position: absolute;
   top: 0; left: 0; right: 0;
   z-index: 2;
-  padding: calc(var(--card-pad) * 0.4) calc(var(--card-pad) * 1.4) calc(var(--card-pad) * 0.3);
+  padding: calc(var(--card-pad) * 1.5) calc(var(--card-pad) * 1.5) calc(var(--card-pad) * 0.3);
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
@@ -800,7 +800,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           </div>
           <label>Gap <input id="posterGap" type="number" value="0" min="-60" max="60"></label>
           <label>Padding <input id="posterPad" type="number" value="10" min="0" max="200"></label>
-          <label>Sprite scale % <input id="posterImgScale" type="number" value="100" min="50" max="300" step="5"></label>
+          <label>Sprite gap px <input id="posterSpriteGap" type="number" value="0" min="-300" max="200" step="1"></label>
         </div>
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
@@ -1251,8 +1251,8 @@ async function renderPoster(list){
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  const imgScale = (parseFloat(v('posterImgScale')) || 100) / 100;
-  setVar('--img', Math.floor(posterImgSize(cellW, cellH, style) * imgScale) + 'px');
+  const spriteGap = parseFloat(v('posterSpriteGap')) || 0;
+  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW, cellH, style) - spriteGap)) + 'px');
 
   const root = el('root');
   root.innerHTML = '';
@@ -1503,7 +1503,7 @@ async function build(){
 // ╚══════════════════════════════════╝
 [
   'gen','style','pxScale','snapInt','lang','zoom','specificIds',
-  'posterCols','posterRows','posterBestFit','posterGap','posterPad','posterImgScale','capPx','capColor',
+  'posterCols','posterRows','posterBestFit','posterGap','posterPad','posterSpriteGap','capPx','capColor',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
