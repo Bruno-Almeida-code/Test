@@ -1236,7 +1236,7 @@ async function renderPoster(list){
 // ╔══════════════════════════════════╗
 // ║  9. RENDER: CARD + CARDS          ║
 // ╚══════════════════════════════════╝
-async function renderCard(pkId, style, lang, textMode){
+async function renderCard(pkId, style, lang, textMode, showRegion=true){
   const sp = await speciesById(pkId);
   const pd = await pokemonData(pkId).catch(() => ({types:[], abilities:[]}));
 
@@ -1283,7 +1283,7 @@ async function renderCard(pkId, style, lang, textMode){
   const abTags = (pd.abilities||[]).slice(0,4).map(a =>
     `<span class="ab-tag${a.hidden ? ' ab-hidden' : ''}">${a.name}</span>`
   ).join('');
-  meta.innerHTML = `<div><b>Abilities</b><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div><div><b>Region:</b> <span class="meta-val">${region}</span></div>`;
+  meta.innerHTML = `<div><b>Abilities</b><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div>${showRegion ? `<div><b>Region:</b> <span class="meta-val">${region}</span></div>` : ''}`;
 
   const desc = document.createElement('div'); desc.className = 'desc';
   desc.textContent = sp._raw ? flavorFromRaw(sp._raw, lang) : '';
@@ -1341,8 +1341,6 @@ async function renderCards(list){
   else { setVar('--card-gap','0px'); setVar('--card-gap-abs', Math.abs(gap)+'px'); }
   setVar('--card-pad', cardPad+'px');
   setVar('--sprite-shift-y', v('spriteY')+'px');
-  const baseMini = +v('miniSize') || 56;
-  setVar('--mini', Math.round(dims.w * (baseMini / 760)) + 'px');
 
   const evoOn = el('evoBoxOn').checked;
   const evoScale = parseFloat(el('evoBoxScale').value) || 0.8;
@@ -1365,8 +1363,14 @@ async function renderCards(list){
   setVar('--card-w', dims.w+'px');
   setVar('--card-h', dims.h+'px');
 
+  const baseMini = +v('miniSize') || 56;
+  setVar('--mini', Math.round(dims.w * (baseMini / 760)) + 'px');
+
   const imgSz = spriteSize(dims.w - cardPad*2, dims.h - cardPad*2, style);
   setVar('--img', imgSz+'px');
+
+  const gens = new Set(list.map(x => x.generation).filter(Boolean));
+  const showRegion = gens.size <= 1;
 
   const perPage = cols * rows;
   const root = el('root');
@@ -1379,7 +1383,7 @@ async function renderCards(list){
     grid.className = 'grid' + (gap<0 ? ' neg-gap' : '');
 
     for(const id of pageIds){
-      grid.appendChild(await renderCard(id, style, lang, textMode));
+      grid.appendChild(await renderCard(id, style, lang, textMode, showRegion));
     }
     for(let k = 0; k < perPage - pageIds.length; k++){
       const ph = document.createElement('div'); ph.className = 'card placeholder';
