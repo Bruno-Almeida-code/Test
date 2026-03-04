@@ -1192,9 +1192,14 @@ async function renderPoster(list){
   setVar('--poster-name-fz', v('capPx')+'px');
   setVar('--poster-name-color', v('capColor'));
 
-  // Subtract title height (matches CSS: 80px region + 6px margin + 36px gen + 20+10px padding)
+  // Detect multi-region: custom IDs spanning >1 generation, or gen=all
+  const gen = v('gen');
+  const gens = new Set(list.map(x => x.generation).filter(Boolean));
+  const multiRegion = gens.size > 1 || (gen === 'all' && !parseIds(el('specificIds').value).length);
+
+  // Title height: 0 when hidden (saves space for grid)
   const capPx  = parseInt(v('capPx'));
-  const titleH = 152;
+  const titleH = multiRegion ? 0 : 152;
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
   setVar('--img', posterImgSize(cellW, cellH, style) + 'px');
@@ -1205,13 +1210,15 @@ async function renderPoster(list){
   const page = document.createElement('div'); page.className = 'page poster';
   const inner = document.createElement('div'); inner.className = 'inner';
 
-  // Title: KANTO (big) + GEN1 (smaller)
-  const gen = v('gen');
+  // Title: KANTO (big) + GEN1 (smaller) — hidden when multiple regions
   const region = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
 
-  const title = document.createElement('div'); title.className = 'poster-title';
-  title.innerHTML = `<div class="region">${region}</div><div class="gen">${genLabel}</div>`;
+  if(!multiRegion){
+    const title = document.createElement('div'); title.className = 'poster-title';
+    title.innerHTML = `<div class="region">${region}</div><div class="gen">${genLabel}</div>`;
+    inner.appendChild(title);
+  }
 
   // Grid
   const grid = document.createElement('div');
@@ -1226,7 +1233,6 @@ async function renderPoster(list){
     grid.appendChild(cell);
   });
 
-  inner.appendChild(title);
   inner.appendChild(grid);
   page.appendChild(inner);
   root.appendChild(page);
