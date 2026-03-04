@@ -33,9 +33,7 @@
   --pad-poster: 10px;
   --poster-cols: 9;
   --poster-rows: 13;
-  --poster-col-gap: 0px;
   --poster-row-gap: 0px;
-  --poster-neg-col: 20px;
   --poster-neg-row: 20px;
   --poster-name-fz: 18px;
   --poster-name-color: #111;
@@ -387,7 +385,6 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   display: grid;
   grid-template-columns: repeat(var(--poster-cols), 1fr);
   grid-template-rows: repeat(var(--poster-rows), 1fr);
-  column-gap: var(--poster-col-gap, 0px);
   row-gap: var(--poster-row-gap, 0px);
 }
 .poster .cell{
@@ -397,8 +394,6 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   justify-content: center;
   position: relative;
   overflow: visible;
-  margin-left:   calc(var(--poster-neg-col, 0px) * -0.5);
-  margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
   margin-top:    calc(var(--poster-neg-row, 0px) * -0.5);
   margin-bottom: calc(var(--poster-neg-row, 0px) * -0.5);
 }
@@ -412,7 +407,6 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 }
 .caption .dex{ opacity: .6; margin-right: 6px; }
 .poster .caption{ margin-top: 2px; }
-.poster .sprite-wrap{ width: 100%; }
 
 
 /* ╔══════════════════════════════════╗
@@ -1228,8 +1222,6 @@ async function renderPoster(list){
   const style = v('style');
 
   setVar('--pad-poster', pad+'px');
-  if(gapX >= 0){ setVar('--poster-col-gap', gapX+'px'); setVar('--poster-neg-col','0px'); }
-  else { setVar('--poster-col-gap','0px'); setVar('--poster-neg-col', Math.abs(gapX)+'px'); }
   if(gapY >= 0){ setVar('--poster-row-gap', gapY+'px'); setVar('--poster-neg-row','0px'); }
   else { setVar('--poster-row-gap','0px'); setVar('--poster-neg-row', Math.abs(gapY)+'px'); }
 
@@ -1253,7 +1245,7 @@ async function renderPoster(list){
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  setVar('--img', posterImgSize(cellW, cellH, style) + 'px');
+  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW, cellH, style) - gapX)) + 'px');
 
   const root = el('root');
   root.innerHTML = '';
