@@ -492,8 +492,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 /* --- Core (main sprite) --- */
 .core{
   padding: 0;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -571,7 +570,8 @@ img.mini{
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 .meta{
   color: rgba(0,0,0,0.72);
@@ -588,9 +588,9 @@ img.mini{
   display: block;
   line-height: 1.4;
   color: rgba(0,0,0,0.72);
-  max-height: 5.2em;
   overflow: hidden;
   font-style: italic;
+  flex: 1 1 auto;
 }
 
 /* --- Type icon badge --- */
@@ -625,7 +625,6 @@ img.mini{
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin-top: 4px;
 }
 .ab-tag{
   background: rgba(0,0,0,0.07);
@@ -1290,7 +1289,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
   const abTags = (pd.abilities||[]).slice(0,4).map(a =>
     `<span class="ab-tag${a.hidden ? ' ab-hidden' : ''}">${a.name}</span>`
   ).join('');
-  meta.innerHTML = `<div><b>Abilities</b><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div>${showRegion ? `<div><b>Region:</b> <span class="meta-val">${region}</span></div>` : ''}`;
+  meta.innerHTML = `<div><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div>${showRegion ? `<div><b>Region:</b> <span class="meta-val">${region}</span></div>` : ''}`;
 
   const desc = document.createElement('div'); desc.className = 'desc';
   desc.textContent = sp._raw ? flavorFromRaw(sp._raw, lang) : '';
@@ -1309,10 +1308,9 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
       const svgDoc = (new DOMParser()).parseFromString(svgText, 'image/svg+xml');
       const svgEl = svgDoc.documentElement;
       if(svgEl.tagName.toLowerCase() === 'svg' && !svgEl.querySelector('parsererror')){
-        // Inject CSS: hide circle background, color all symbol paths with type color
-        const st = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
-        st.textContent = `circle{display:none!important}path,polygon,polyline,ellipse,rect{fill:${iconColor}!important}`;
-        svgEl.insertBefore(st, svgEl.firstChild);
+        // Color elements inline (no <style> tag — prevents cross-card leaking)
+        svgEl.querySelectorAll('circle').forEach(c => { c.style.display = 'none'; });
+        svgEl.querySelectorAll('path,polygon,polyline,ellipse,rect').forEach(s => { s.style.fill = iconColor; });
         svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
         svgEl.style.cssText = 'display:block;flex-shrink:0;';
         iconWrap.appendChild(document.importNode(svgEl, true));
