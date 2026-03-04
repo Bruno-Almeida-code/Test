@@ -62,9 +62,9 @@
   /* Card: typography */
   --head-fz: 26px;
   --meta-fz: 16px;
-  --meta-label-fz: 28px;
-  --meta-value-fz: 22px;
-  --desc-fz: 14px;
+  --meta-label-fz: 36px;
+  --meta-value-fz: 36px;
+  --desc-fz: 30px;
   --meta-gap: 12px;
 
   /* Card: colors */
@@ -502,7 +502,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   min-height: 0;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
 }
 .sprite-wrap{
@@ -526,8 +526,8 @@ img.poke.pixel{
 
 /* --- Evolution strip --- */
 .evo-strip{
-  margin-top: calc(var(--card-pad) * -0.6);
-  padding: 0 calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.3);
+  margin-top: calc(var(--card-pad) * -1.2);
+  padding: 0 calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -574,7 +574,7 @@ img.mini{
 
 /* --- Info (ability, region, description) --- */
 .info{
-  padding: calc(var(--card-pad) * 0.2) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.8);
+  padding: calc(var(--card-pad) * 0.4) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.8);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -882,12 +882,12 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row" id="manualTextRow" style="display:none">
           <label>Name px <input id="cHead" type="number" value="68" min="10" max="120"></label>
           <label>Meta px <input id="cMeta" type="number" value="32" min="10" max="60"></label>
-          <label>Desc px <input id="cDesc" type="number" value="22" min="10" max="50"></label>
+          <label>Desc px <input id="cDesc" type="number" value="30" min="10" max="50"></label>
           <label>Meta gap <input id="metaGap" type="number" value="12" min="0" max="60"></label>
         </div>
         <div class="row" id="manualTextRow2" style="display:none">
-          <label>Label size <input id="metaLabelSize" type="number" value="28" min="10" max="60"></label>
-          <label>Value size <input id="metaValueSize" type="number" value="22" min="10" max="60"></label>
+          <label>Label size <input id="metaLabelSize" type="number" value="36" min="10" max="60"></label>
+          <label>Value size <input id="metaValueSize" type="number" value="36" min="10" max="60"></label>
         </div>
         <div class="row">
           <label>Card bg <input id="cardBoxBg" type="color" value="#ffffff"></label>
@@ -1376,7 +1376,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
   iconWrap.appendChild(nameTag);
   badge.appendChild(iconWrap);
 
-  card.append(head, core, evo, info);
+  card.append(head, core, ...(ids.length > 1 ? [evo] : []), info);
   head.querySelector('.right').appendChild(badge);
   return card;
 }
