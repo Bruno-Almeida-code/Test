@@ -235,11 +235,15 @@ textarea{
 .type-pill{
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 8px; border-radius: 12px; border: 2px solid transparent;
+  transition: opacity .1s, transform .1s;
   font-size: 11px; font-weight: 600; cursor: pointer;
   color: #fff; opacity: 0.4; transition: opacity .15s, border-color .15s;
   user-select: none; text-transform: capitalize;
 }
 .type-pill.active{ opacity: 1; border-color: rgba(255,255,255,0.5); }
+.type-pill.drag-over{ transform: scale(1.12); border-color: #fff; }
+#typeOrderList .type-pill{ cursor: grab; opacity: 1; }
+#typeOrderList .type-pill:active{ cursor: grabbing; }
 input[type="color"]{
   width: 32px; height: 32px;
   border: 1px solid var(--border);
@@ -839,6 +843,10 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             </select>
           </label>
         </div>
+        <div class="row" id="typeOrderRow" style="display:none;flex-direction:column;gap:6px">
+          <span style="font-size:11px;color:var(--muted)">Drag to set type order</span>
+          <div id="typeOrderList" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        </div>
       </div>
     </details>
 
@@ -1154,7 +1162,11 @@ const GEN_ID_RANGES = {
 };
 const TYPE_ORDER = ['normal','fire','water','electric','grass','ice','fighting','poison',
   'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
-const typeIdx = t => { const i = TYPE_ORDER.indexOf(t); return i >= 0 ? i : 99; };
+function getTypeOrder(){
+  const pills = document.querySelectorAll('#typeOrderList .type-pill');
+  return pills.length ? [...pills].map(p => p.dataset.type) : TYPE_ORDER;
+}
+const typeIdx = t => { const i = getTypeOrder().indexOf(t); return i >= 0 ? i : 99; };
 
 // Build type filter pill buttons
 (function initTypeFilter(){
@@ -1193,6 +1205,54 @@ el('addAllTypeBtn').addEventListener('click', async () => {
   el('specificIds').value = [...ids].sort((a,b) => a-b).join(', ');
   debouncedBuild();
 });
+
+// Draggable type order list
+(function initTypeOrder(){
+  const container = el('typeOrderList');
+  TYPE_ORDER.forEach(t => {
+    const pill = document.createElement('span');
+    pill.className = 'type-pill';
+    pill.textContent = t;
+    pill.dataset.type = t;
+    pill.style.background = typeColor(t);
+    pill.draggable = true;
+    container.appendChild(pill);
+  });
+
+  let dragSrc = null;
+
+  container.addEventListener('dragstart', e => {
+    dragSrc = e.target.closest('.type-pill');
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => dragSrc && dragSrc.classList.add('active'), 0);
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const target = e.target.closest('.type-pill');
+    if(!target || target === dragSrc) return;
+    // Remove drag-over from all
+    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+    // Live reorder: insert before or after based on cursor position
+    const rect = target.getBoundingClientRect();
+    const after = e.clientX > rect.left + rect.width / 2;
+    container.insertBefore(dragSrc, after ? target.nextSibling : target);
+  });
+
+  container.addEventListener('dragend', () => {
+    if(dragSrc) dragSrc.classList.remove('active');
+    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    dragSrc = null;
+    debouncedBuild();
+  });
+})();
+
+function syncSortUI(){
+  el('typeOrderRow').style.display = v('sortBy') === 'type' ? '' : 'none';
+}
+el('sortBy').addEventListener('change', syncSortUI);
+syncSortUI();
 
 function titleName(n){ return n.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
 
