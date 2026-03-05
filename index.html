@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Pokédex Poster + Pokémon Cards Builder</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
 <style>
 
 /* ╔══════════════════════════════════╗
@@ -370,7 +370,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   align-items: center;
   justify-content: center;
   gap: 20px;
-  font-family: "VT323", ui-monospace, monospace;
+  font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   padding: 16px 20px;
   line-height: 1;
 }
@@ -385,6 +385,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 .poster-title .title-sep{ color: #bbb; padding: 0 6px; }
 .poster-title .reg-label{ color: #111; font-weight: 800; }
 .poster-title .title-desc-wrap{
+  font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   font-size: 72px;
   color: #888;
   letter-spacing: 1px;
@@ -410,7 +411,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
 }
 .caption{
-  font-family: "VT323", ui-monospace, monospace;
+  font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   font-size: var(--poster-name-fz);
   color: var(--poster-name-color);
   line-height: 1;
@@ -799,7 +800,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <label style="width:100%">Custom IDs (optional)
             <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
           </label>
-          <button id="randomIdsBtn" title="Pick 9 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 Random</button>
+          <button id="randomIdsBtn" title="Pick 150 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 150 Random</button>
           <button id="cleanBtn" title="Reset to default" style="align-self:flex-end;margin-bottom:2px">✕ Clean</button>
         </div>
       </div>
@@ -814,6 +815,12 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             <select id="posterMode">
               <option value="image" selected>Image</option>
               <option value="grid">Grid</option>
+            </select>
+          </label>
+          <label>Font
+            <select id="posterFont">
+              <option value="VT323" selected>VT323 (pixel)</option>
+              <option value="Bebas Neue">Bebas Neue</option>
             </select>
           </label>
           <label style="align-self:center"><input id="posterBestFit" type="checkbox" checked> Best fit</label>
@@ -857,9 +864,14 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             <input id="posterCustomTitle" type="text" placeholder="e.g. MY FAVORITES" style="width:100%;font-family:'VT323',monospace;font-size:18px">
           </label>
         </div>
-        <div class="row">
-          <label>Random count <input id="posterRandomCount" type="number" value="168" min="1" max="1010"></label>
-          <button id="posterRandomBtn" style="align-self:flex-end;margin-bottom:2px">🎲 Random poster</button>
+        <div class="row" style="align-items:center;gap:12px">
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterImagePreset" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Image preset
+          </label>
         </div>
       </div>
     </details>
@@ -1293,12 +1305,14 @@ async function buildChainsFromList(list){
 // ╚══════════════════════════════════╝
 
 // Mitchell's best-candidate blue noise shuffle for 2D grids
-function blueNoiseShuffle(list, cols) {
+function blueNoiseShuffle(list, cols, rows) {
   const n = list.length;
   if(n < 2) return [...list];
-  const rows = Math.ceil(n / cols);
-  const px = i => (i % cols) / Math.max(cols - 1, 1);
-  const py = i => Math.floor(i / cols) / Math.max(rows - 1, 1);
+  const actualRows = rows || Math.ceil(n / cols);
+  const cw = 2480 / cols;            // cell width in actual page pixels
+  const ch = 3508 / actualRows;      // cell height in actual page pixels
+  const px = i => (i % cols) * cw;
+  const py = i => Math.floor(i / cols) * ch;
   const d2 = (a, b) => { const dx = px(a)-px(b), dy = py(a)-py(b); return dx*dx+dy*dy; };
 
   const avail = [...Array(n).keys()];
@@ -1336,6 +1350,7 @@ async function renderPoster(list){
   setVar('--poster-name-color', v('capColor'));
   setVar('--cap-offset-y', v('capOffsetY')+'px');
   setVar('--cap-offset-x', v('capOffsetX')+'px');
+  setVar('--poster-title-font', `"${v('posterFont') || 'VT323'}"`);
 
   const showCaption = el('posterShowCaption').checked;
   const showTitle   = el('posterShowTitle').checked;
@@ -1376,7 +1391,7 @@ async function renderPoster(list){
   const customTitle = v('posterCustomTitle').trim().toUpperCase() || 'MY COLLECTION';
 
   // Apply blue noise shuffle before chunking
-  const orderedList = blueNoise ? blueNoiseShuffle(list, cols) : list;
+  const orderedList = blueNoise ? blueNoiseShuffle(list, cols, rows) : list;
 
   // Chunk list into pages
   const pageSize = cols * rows;
@@ -1645,8 +1660,8 @@ async function build(){
 [
   'gen','style','pxScale','snapInt','zoom','specificIds',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
-  'posterMode','capPx','capColor','capOffsetX','capOffsetY',
-  'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle','posterRandomCount',
+  'posterMode','posterFont','capPx','capColor','capOffsetX','capOffsetY',
+  'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
@@ -1670,17 +1685,20 @@ function syncBestFitUI(){
 el('posterBestFit').addEventListener('change', syncBestFitUI);
 syncBestFitUI();
 
-el('posterRandomBtn').addEventListener('click', () => {
-  const n = Math.min(1010, Math.max(1, parseInt(v('posterRandomCount')) || 168));
-  const picks = new Set();
-  while(picks.size < n) picks.add(Math.floor(Math.random() * 1010) + 1);
-  el('specificIds').value = [...picks].sort((a,b)=>a-b).join(', ');
+el('posterImagePreset').addEventListener('change', () => {
+  if(!el('posterImagePreset').checked) return;
+  el('posterMode').value = 'image';
+  el('posterGapX').value = '-20';
+  el('posterGapY').value = '-20';
+  el('posterBestFit').checked = true;
+  syncPosterUI();
+  syncBestFitUI();
   debouncedBuild();
 });
 
 el('randomIdsBtn').addEventListener('click', () => {
   const picks = new Set();
-  while(picks.size < 9) picks.add(Math.floor(Math.random() * 1010) + 1);
+  while(picks.size < 150) picks.add(Math.floor(Math.random() * 1010) + 1);
   el('specificIds').value = [...picks].join(', ');
   debouncedBuild();
 });
