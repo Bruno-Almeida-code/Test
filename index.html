@@ -390,12 +390,13 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   letter-spacing: 2px;
 }
 .poster-title .gen-label{ color: #888; }
-.poster-title .title-sep{ color: #bbb; padding: 0 6px; }
+.poster-title .title-sep{ color: #888; padding: 0 6px; }
 .poster-title .reg-label{ color: #111; font-weight: 800; }
 .poster-title .title-desc-wrap{
   font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   font-size: 72px;
   color: #888;
+  text-transform: uppercase;
   letter-spacing: 1px;
 }
 .poster-grid{
@@ -1753,10 +1754,31 @@ el('posterImagePreset').addEventListener('change', () => {
   debouncedBuild();
 });
 
-el('randomIdsBtn').addEventListener('click', () => {
-  const picks = new Set();
-  while(picks.size < 150) picks.add(Math.floor(Math.random() * 1010) + 1);
-  el('specificIds').value = [...picks].join(', ');
+el('randomIdsBtn').addEventListener('click', async () => {
+  const selectedTypes = [...document.querySelectorAll('#typeFilter .type-pill.active')].map(p => p.dataset.type);
+  let pool;
+  if(selectedTypes.length){
+    const gen = v('gen');
+    const [minId, maxId] = GEN_ID_RANGES[gen] || [1, 1010];
+    const typeData = await Promise.all(selectedTypes.map(t => cachedFetch(`https://pokeapi.co/api/v2/type/${t}/`)));
+    const typeIds = new Set();
+    for(const td of typeData){
+      for(const p of td.pokemon){
+        const pid = +p.pokemon.url.split('/').slice(-2,-1)[0];
+        if(pid >= minId && pid <= maxId) typeIds.add(pid);
+      }
+    }
+    pool = [...typeIds];
+  } else {
+    pool = Array.from({length: 1010}, (_, i) => i + 1);
+  }
+  // Shuffle pool and take 150
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const picks = pool.slice(0, Math.min(150, pool.length));
+  el('specificIds').value = picks.sort((a,b) => a-b).join(', ');
   debouncedBuild();
 });
 el('cleanBtn').addEventListener('click', () => {
