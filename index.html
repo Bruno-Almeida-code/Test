@@ -428,14 +428,18 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   margin-left:   calc(var(--poster-neg-col, 0px) * -0.5);
   margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
 }
-.poster.row-fade .cell::after{
-  content: '';
+.row-fade-overlay{
   position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: var(--img, 96px);
-  background: linear-gradient(to top, rgba(255,255,255,0.05), transparent);
+  inset: 0;
   pointer-events: none;
   z-index: 3;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 70%,
+    rgba(255,255,255,0.05) 100%
+  );
+  background-size: 100% var(--row-pitch, 96px);
+  background-position: 0 var(--pad-poster, 0px);
 }
 .caption{
   font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
@@ -1580,7 +1584,9 @@ async function renderPoster(list){
 
   for(let pi = 0; pi < chunks.length; pi++){
     const rowFade = el('posterRowFade').checked;
-    const page = document.createElement('div'); page.className = `page poster mode-${posterMode}${rowFade ? ' row-fade' : ''}`;
+    const rowPitch = Math.round(cellH);
+    const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
+    if(rowFade) page.style.setProperty('--row-pitch', rowPitch + 'px');
     const inner = document.createElement('div'); inner.className = 'inner';
     // Reserve extra bottom space for title so grid never overlaps it
     if(pi === 0 && showTitle) inner.style.paddingBottom = (pad + titleH) + 'px';
@@ -1629,6 +1635,11 @@ async function renderPoster(list){
     }
 
     page.appendChild(inner);
+
+    if(rowFade && posterMode !== 'scatter'){
+      const overlay = document.createElement('div'); overlay.className = 'row-fade-overlay';
+      page.appendChild(overlay);
+    }
 
     // Title: absolute on page, always within page bounds regardless of grid overflow
     if(pi === 0 && showTitle){
