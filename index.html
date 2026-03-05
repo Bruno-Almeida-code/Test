@@ -1546,12 +1546,12 @@ async function renderPoster(list){
   const root = el('root');
   root.innerHTML = '';
 
-  // Title data
-  const isCustomList = parseIds(el('specificIds').value).length > 0;
+  // Title data — custom title overrides gen title when typed, even without custom IDs
+  const customTitle = v('posterCustomTitle').trim().toUpperCase();
+  const isCustomList = parseIds(el('specificIds').value).length > 0 || !!customTitle;
   const region   = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
   const regionDesc = GEN_DESC[gen] || '';
-  const customTitle = v('posterCustomTitle').trim().toUpperCase() || 'MY COLLECTION';
 
   // Apply blue noise shuffle before chunking
   const orderedList = blueNoise ? blueNoiseShuffle(list, cols, rows) : list;
@@ -1619,7 +1619,7 @@ async function renderPoster(list){
       if(isCustomList){
         title.innerHTML = `
           <div class="title-main">
-            <span class="reg-label">${customTitle}</span>
+            <span class="reg-label">${customTitle || 'MY COLLECTION'}</span>
           </div>`;
       } else {
         title.innerHTML = `
