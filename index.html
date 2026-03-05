@@ -435,7 +435,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   z-index: 3;
   background: repeating-linear-gradient(
     to bottom,
-    transparent 70%,
+    transparent var(--fade-start, 70%),
     rgba(255,255,255,0.20) 100%
   );
   background-size: 100% var(--row-pitch, 96px);
@@ -1584,9 +1584,11 @@ async function renderPoster(list){
 
   for(let pi = 0; pi < chunks.length; pi++){
     const rowFade = el('posterRowFade').checked;
-    const rowPitch = Math.round(cellH);
+    const rowHeight = gapY > 0 ? (cellH * rows - (rows - 1) * gapY) / rows : cellH;
+    const rowPitch  = Math.round(gapY > 0 ? rowHeight + gapY : cellH);
+    const fadeStart = Math.min(98, Math.round(spriteSize / rowPitch * 100));
     const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
-    if(rowFade) page.style.setProperty('--row-pitch', rowPitch + 'px');
+    if(rowFade){ page.style.setProperty('--row-pitch', rowPitch + 'px'); page.style.setProperty('--fade-start', fadeStart + '%'); }
     const inner = document.createElement('div'); inner.className = 'inner';
     // Reserve extra bottom space for title so grid never overlaps it
     if(pi === 0 && showTitle) inner.style.paddingBottom = (pad + titleH) + 'px';
