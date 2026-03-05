@@ -435,8 +435,9 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   z-index: 3;
   background: repeating-linear-gradient(
     to bottom,
-    transparent var(--fade-start, 70%),
-    rgba(255,255,255,0.20) 100%
+    transparent 0%,
+    rgba(255,255,255,0.20) var(--fade-start, 70%),
+    transparent var(--fade-start, 70%)
   );
   background-size: 100% var(--row-pitch, 96px);
   background-position: 0 var(--pad-poster, 0px);
@@ -1586,7 +1587,10 @@ async function renderPoster(list){
     const rowFade = el('posterRowFade').checked;
     const rowHeight = gapY > 0 ? (cellH * rows - (rows - 1) * gapY) / rows : cellH;
     const rowPitch  = Math.round(gapY > 0 ? rowHeight + gapY : cellH);
-    const fadeStart = Math.min(98, Math.round(spriteSize / rowPitch * 100));
+    const spriteBottomInPitch = gapY < 0
+      ? Math.max(10, rowPitch + gapY / 2)
+      : spriteSize;
+    const fadeStart = Math.min(98, Math.round(spriteBottomInPitch / rowPitch * 100));
     const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
     if(rowFade){ page.style.setProperty('--row-pitch', rowPitch + 'px'); page.style.setProperty('--fade-start', fadeStart + '%'); }
     const inner = document.createElement('div'); inner.className = 'inner';
