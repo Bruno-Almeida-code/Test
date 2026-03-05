@@ -381,6 +381,11 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   padding: 16px 20px;
   line-height: 1;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
 }
 .poster-title .title-main{
   display: flex;
@@ -443,6 +448,13 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   text-align: center;
   margin-top: 4px;
 }
+.poster.mode-scatter .caption{
+  position: absolute;
+  top: calc(50% - var(--cap-offset-y, 100px));
+  left: calc(50% - var(--cap-offset-x, 100px));
+  text-align: left;
+}
+.poster.mode-scatter .inner{ position: relative; }
 .poster .caption .cap-nm{ display: block; }
 .poster .caption .cap-dex{ display: block; opacity: .6; }
 
@@ -829,6 +841,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             <select id="posterMode">
               <option value="image" selected>Image</option>
               <option value="grid">Grid</option>
+              <option value="scatter">Scatter</option>
             </select>
           </label>
           <label>Font
@@ -1376,6 +1389,26 @@ function blueNoiseShuffle(list, cols, rows) {
   return result;
 }
 
+// Blue-noise continuous scatter positions within page bounds
+function scatterPositions(n, spriteSize, pad, titleH) {
+  const minX = pad, maxX = 2480 - pad - spriteSize;
+  const minY = pad, maxY = 3508 - pad - titleH - spriteSize;
+  const randPos = () => [minX + Math.random() * (maxX - minX), minY + Math.random() * (maxY - minY)];
+  const d2 = (a, b) => { const dx = a[0]-b[0], dy = a[1]-b[1]; return dx*dx+dy*dy; };
+  const positions = [randPos()];
+  while(positions.length < n){
+    let best = null, bestD = -1;
+    for(let t = 0; t < 40; t++){
+      const cand = randPos();
+      let minD = Infinity;
+      for(const p of positions) minD = Math.min(minD, d2(cand, p));
+      if(minD > bestD){ bestD = minD; best = cand; }
+    }
+    positions.push(best);
+  }
+  return positions;
+}
+
 async function renderPoster(list){
   let cols = +v('posterCols'), rows = +v('posterRows');
   const gapX = +v('posterGapX'), gapY = +v('posterGapY'), pad = +v('posterPad');
@@ -1419,7 +1452,8 @@ async function renderPoster(list){
 
   const cellW  = (2480 - 2*pad) / cols;
   const cellH  = (3508 - 2*pad - titleH) / rows;
-  setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW + overlapX, cellH + overlapY, style))) + 'px');
+  const spriteSize = Math.max(10, Math.floor(posterImgSize(cellW + overlapX, cellH + overlapY, style)));
+  setVar('--img', spriteSize + 'px');
 
   const root = el('root');
   root.innerHTML = '';
@@ -1444,24 +1478,52 @@ async function renderPoster(list){
     const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
     const inner = document.createElement('div'); inner.className = 'inner';
 
-    // Grid first (title goes at bottom)
-    const grid = document.createElement('div');
-    grid.className = 'poster-grid';
+    if(posterMode === 'scatter'){
+      // Scatter: blue-noise continuous positions, no grid
+      inner.style.padding = '0';
+      const scatterTitleH = (pi === 0 && showTitle) ? 100 : 0;
+      const positions = scatterPositions(chunks[pi].length, spriteSize, pad, scatterTitleH);
+      chunks[pi].forEach((pk, ci) => {
+        const [sx, sy] = positions[ci];
+        const cell = document.createElement('div'); cell.className = 'cell';
+        cell.style.cssText = `position:absolute;left:${Math.round(sx)}px;top:${Math.round(sy)}px;width:${spriteSize}px;height:${spriteSize}px;`;
+        cell.appendChild(spriteWrap(artURL(pk.id, style), style));
+        if(showCaption){
+          const cap = document.createElement('div'); cap.className = 'caption';
+          cap.innerHTML = `<span class="cap-nm">${pk.name}</span><span class="cap-dex">#${String(pk.id).padStart(3,'0')}</span>`;
+          cell.appendChild(cap);
+        }
+        inner.appendChild(cell);
+      });
+    } else {
+      // Grid mode (image or grid)
+      const grid = document.createElement('div');
+      grid.className = 'poster-grid';
 
-    chunks[pi].forEach(pk => {
-      const cell = document.createElement('div'); cell.className = 'cell';
-      cell.appendChild(spriteWrap(artURL(pk.id, style), style));
-      if(showCaption){
-        const cap = document.createElement('div'); cap.className = 'caption';
-        cap.innerHTML = `<span class="cap-nm">${pk.name}</span><span class="cap-dex">#${String(pk.id).padStart(3,'0')}</span>`;
-        cell.appendChild(cap);
+      chunks[pi].forEach(pk => {
+        const cell = document.createElement('div'); cell.className = 'cell';
+        cell.appendChild(spriteWrap(artURL(pk.id, style), style));
+        if(showCaption){
+          const cap = document.createElement('div'); cap.className = 'caption';
+          cap.innerHTML = `<span class="cap-nm">${pk.name}</span><span class="cap-dex">#${String(pk.id).padStart(3,'0')}</span>`;
+          cell.appendChild(cap);
+        }
+        grid.appendChild(cell);
+      });
+
+      // Center incomplete last row
+      const lastRowCount = chunks[pi].length % cols;
+      if(lastRowCount > 0){
+        const startCol = Math.floor((cols - lastRowCount) / 2) + 1;
+        grid.children[chunks[pi].length - lastRowCount].style.gridColumnStart = startCol;
       }
-      grid.appendChild(cell);
-    });
 
-    inner.appendChild(grid);
+      inner.appendChild(grid);
+    }
 
-    // Title at bottom-center (first page only, when shown)
+    page.appendChild(inner);
+
+    // Title: absolute on page, always within page bounds regardless of grid overflow
     if(pi === 0 && showTitle){
       const title = document.createElement('div'); title.className = 'poster-title';
       if(isCustomList){
@@ -1478,9 +1540,8 @@ async function renderPoster(list){
           </div>
           <div class="title-desc-wrap">${regionDesc}</div>`;
       }
-      inner.appendChild(title);
+      page.appendChild(title);
     }
-    page.appendChild(inner);
     root.appendChild(page);
     await preloadImages(page);
   }
@@ -1726,7 +1787,8 @@ async function build(){
 ].forEach(id => el(id).addEventListener('input', debouncedBuild));
 
 function syncPosterUI(){
-  const isImage = (v('posterMode') || 'image') === 'image';
+  const mode = v('posterMode') || 'image';
+  const isImage = mode !== 'grid';   // image and scatter both have offset controls
   const isCustom = parseIds(el('specificIds').value).length > 0 || false;
   el('capOffsetXRow').style.display = isImage ? '' : 'none';
   el('capOffsetYRow').style.display = isImage ? '' : 'none';
