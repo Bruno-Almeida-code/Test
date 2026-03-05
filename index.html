@@ -837,10 +837,6 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           </label>
         </div>
         <div class="row">
-          <label style="flex:1">Description line 1 <input id="posterDesc1" type="text" placeholder="e.g. My Collection" style="width:100%"></label>
-          <label style="flex:1">Description line 2 <input id="posterDesc2" type="text" placeholder="e.g. 2025 Edition" style="width:100%"></label>
-        </div>
-        <div class="row">
           <label>Random count <input id="posterRandomCount" type="number" value="168" min="1" max="1010"></label>
           <button id="posterRandomBtn" style="align-self:flex-end;margin-bottom:2px">🎲 Random poster</button>
         </div>
@@ -1065,6 +1061,18 @@ const GEN_REGIONS = {
   1:'KANTO', 2:'JOHTO', 3:'HOENN', 4:'SINNOH', 5:'UNOVA',
   6:'KALOS', 7:'ALOLA', 8:'GALAR', 9:'PALDEA', all:'ALL REGIONS'
 };
+const GEN_DESC = {
+  1:  ['151 Pokémon', 'The original region'],
+  2:  ['100 Pokémon', 'Land of tradition'],
+  3:  ['135 Pokémon', 'The tropical region'],
+  4:  ['107 Pokémon', 'Land of myth'],
+  5:  ['156 Pokémon', 'The metropolitan region'],
+  6:  ['72 Pokémon',  'The beautiful region'],
+  7:  ['88 Pokémon',  'Island paradise'],
+  8:  ['96 Pokémon',  'The industrial region'],
+  9:  ['120 Pokémon', 'Land of adventure'],
+  all:['1025 Pokémon','All regions combined'],
+};
 const API_GEN_TO_REGION = {
   'generation-i':'KANTO','generation-ii':'JOHTO','generation-iii':'HOENN',
   'generation-iv':'SINNOH','generation-v':'UNOVA','generation-vi':'KALOS',
@@ -1277,6 +1285,9 @@ async function renderPoster(list){
   setVar('--cap-offset-y', v('capOffsetY')+'px');
   setVar('--cap-offset-x', v('capOffsetX')+'px');
 
+  const showCaption = el('posterShowCaption').checked;
+  const showTitle   = el('posterShowTitle').checked;
+
   // Detect multi-region: custom IDs spanning >1 generation, or gen=all
   const gen = v('gen');
   const gens = new Set(list.map(x => x.generation).filter(Boolean));
@@ -1299,16 +1310,13 @@ async function renderPoster(list){
   const cellH  = (3508 - 2*pad - titleH) / rows;
   setVar('--img', Math.max(10, Math.floor(posterImgSize(cellW + overlapX, cellH + overlapY, style))) + 'px');
 
-  const showCaption = el('posterShowCaption').checked;
-  const showTitle = el('posterShowTitle').checked;
   const root = el('root');
   root.innerHTML = '';
 
   // Title data
   const region = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
-  const descLine1 = v('posterDesc1');
-  const descLine2 = v('posterDesc2');
+  const [descLine1, descLine2] = GEN_DESC[gen] || ['', ''];
 
   // Chunk list into pages
   const pageSize = cols * rows;
@@ -1573,7 +1581,7 @@ async function build(){
 [
   'gen','style','pxScale','snapInt','zoom','specificIds',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
-  'capPx','capColor','capOffsetX','capOffsetY','posterShowCaption','posterShowTitle','posterDesc1','posterDesc2','posterRandomCount',
+  'capPx','capColor','capOffsetX','capOffsetY','posterShowCaption','posterShowTitle','posterRandomCount',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
