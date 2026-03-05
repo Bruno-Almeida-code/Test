@@ -232,6 +232,14 @@ textarea{
   padding: 8px;
   resize: vertical;
 }
+.type-pill{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 12px; border: 2px solid transparent;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  color: #fff; opacity: 0.4; transition: opacity .15s, border-color .15s;
+  user-select: none; text-transform: capitalize;
+}
+.type-pill.active{ opacity: 1; border-color: rgba(255,255,255,0.5); }
 input[type="color"]{
   width: 32px; height: 32px;
   border: 1px solid var(--border);
@@ -803,6 +811,11 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <button id="randomIdsBtn" title="Pick 150 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 150 Random</button>
           <button id="cleanBtn" title="Reset to default" style="align-self:flex-end;margin-bottom:2px">✕ Clean</button>
         </div>
+        <div class="row" style="flex-wrap:wrap;gap:6px;align-items:center">
+          <span style="font-size:12px;color:var(--muted);min-width:80px">Type filter</span>
+          <div id="typeFilter" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+          <button id="clearTypesBtn" style="font-size:11px;padding:2px 8px;margin-left:4px">Clear</button>
+        </div>
       </div>
     </details>
 
@@ -1111,6 +1124,33 @@ const API_GEN_TO_REGION = {
   'generation-iv':'SINNOH','generation-v':'UNOVA','generation-vi':'KALOS',
   'generation-vii':'ALOLA','generation-viii':'GALAR','generation-ix':'PALDEA'
 };
+const GEN_ID_RANGES = {
+  1:[1,151],2:[152,251],3:[252,386],4:[387,493],5:[494,649],
+  6:[650,721],7:[722,809],8:[810,905],9:[906,1010],all:[1,1010]
+};
+
+// Build type filter pill buttons
+(function initTypeFilter(){
+  const types = ['normal','fire','water','electric','grass','ice','fighting','poison',
+    'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+  const container = el('typeFilter');
+  for(const t of types){
+    const pill = document.createElement('span');
+    pill.className = 'type-pill';
+    pill.textContent = t;
+    pill.dataset.type = t;
+    pill.style.background = typeColor(t);
+    pill.addEventListener('click', () => {
+      pill.classList.toggle('active');
+      debouncedBuild();
+    });
+    container.appendChild(pill);
+  }
+})();
+el('clearTypesBtn').addEventListener('click', () => {
+  document.querySelectorAll('#typeFilter .type-pill.active').forEach(p => p.classList.remove('active'));
+  debouncedBuild();
+});
 
 function titleName(n){ return n.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
 
@@ -1633,17 +1673,34 @@ async function build(){
     setVar('--zoom', v('zoom'));
 
     const ids = parseIds(el('specificIds').value);
+    const selectedTypes = [...document.querySelectorAll('#typeFilter .type-pill.active')].map(p => p.dataset.type);
     let list;
     if(ids.length){
       list = await resolveListFromIds(ids);
-    } else if(MODE.get() === 'cards'){
-      const gen = v('gen');
-      const full = (gen==='all') ? await allSpecies() : await genSpecies(gen);
-      const perPage = Math.max(1, +v('cardCols')) * Math.max(1, +v('cardRows'));
-      list = full.slice(0, perPage);
     } else {
       const gen = v('gen');
-      list = (gen==='all') ? await allSpecies() : await genSpecies(gen);
+      let full = (gen==='all') ? await allSpecies() : await genSpecies(gen);
+
+      // Type filter: fetch PokeAPI type data and intersect
+      if(selectedTypes.length){
+        const [minId, maxId] = GEN_ID_RANGES[gen] || [1, 1010];
+        const typeData = await Promise.all(selectedTypes.map(t => cachedFetch(`https://pokeapi.co/api/v2/type/${t}/`)));
+        const typeIds = new Set();
+        for(const td of typeData){
+          for(const p of td.pokemon){
+            const pid = +p.pokemon.url.split('/').slice(-2,-1)[0];
+            if(pid >= minId && pid <= maxId) typeIds.add(pid);
+          }
+        }
+        full = full.filter(pk => typeIds.has(pk.id));
+      }
+
+      if(MODE.get() === 'cards'){
+        const perPage = Math.max(1, +v('cardCols')) * Math.max(1, +v('cardRows'));
+        list = full.slice(0, perPage);
+      } else {
+        list = full;
+      }
     }
 
     if(MODE.get() === 'poster') await renderPoster(list);
