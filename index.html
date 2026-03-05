@@ -821,7 +821,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <label style="width:100%">Custom IDs (optional)
             <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
           </label>
-          <button id="randomIdsBtn" title="Pick 152 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 152 Random</button>
+          <button id="randomIdsBtn" title="Pick N random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 Random</button>
           <button id="cleanBtn" title="Reset to default" style="align-self:flex-end;margin-bottom:2px">✕ Clean</button>
         </div>
         <div class="row" style="flex-wrap:wrap;gap:6px;align-items:center">
@@ -896,9 +896,9 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             Blue noise
           </label>
         </div>
-        <div class="row" id="posterCustomTitleRow" style="display:none">
-          <label style="flex:1">Custom title
-            <input id="posterCustomTitle" type="text" placeholder="e.g. MY FAVORITES" style="width:100%;font-family:'VT323',monospace;font-size:18px">
+        <div class="row" id="posterCustomTitleRow">
+          <label style="flex:1">Custom title (shown when using Custom IDs)
+            <input id="posterCustomTitle" type="text" placeholder="MY COLLECTION" style="width:100%;font-family:'VT323',monospace;font-size:18px">
           </label>
         </div>
         <div class="row" style="align-items:center;gap:12px">
@@ -1829,7 +1829,6 @@ function syncPosterUI(){
   const isCustom = parseIds(el('specificIds').value).length > 0 || false;
   el('capOffsetXRow').style.display = isImage ? '' : 'none';
   el('capOffsetYRow').style.display = isImage ? '' : 'none';
-  el('posterCustomTitleRow').style.display = isCustom ? '' : 'none';
 }
 el('posterMode').addEventListener('change', () => { syncPosterUI(); });
 el('specificIds').addEventListener('input', syncPosterUI);
@@ -1841,6 +1840,16 @@ function syncBestFitUI(){
 }
 el('posterBestFit').addEventListener('change', syncBestFitUI);
 syncBestFitUI();
+
+function updateRandomLabel(){
+  const n = Math.max(1, parseInt(v('posterCols') || 9) * parseInt(v('posterRows') || 13));
+  el('randomIdsBtn').textContent = `🎲 ${n} Random`;
+  el('randomIdsBtn').title = `Pick ${n} random Pokémon (cols × rows)`;
+}
+el('posterCols').addEventListener('input', updateRandomLabel);
+el('posterRows').addEventListener('input', updateRandomLabel);
+el('posterBestFit').addEventListener('change', updateRandomLabel);
+updateRandomLabel();
 
 el('posterImagePreset').addEventListener('change', () => {
   if(!el('posterImagePreset').checked) return;
@@ -1881,7 +1890,8 @@ el('randomIdsBtn').addEventListener('click', async () => {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  const picks = pool.slice(0, Math.min(152, pool.length));
+  const n = Math.max(1, parseInt(v('posterCols') || 9) * parseInt(v('posterRows') || 13));
+  const picks = pool.slice(0, Math.min(n, pool.length));
   el('specificIds').value = picks.sort((a,b) => a-b).join(', ');
   debouncedBuild();
 });
