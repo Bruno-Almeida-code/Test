@@ -385,14 +385,9 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
 .poster-title .title-sep{ color: #bbb; padding: 0 6px; }
 .poster-title .reg-label{ color: #111; font-weight: 800; }
 .poster-title .title-desc-wrap{
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 72px;
-  font-size: var(--poster-name-fz, 18px);
+  font-size: 72px;
   color: #888;
-  text-align: left;
-  padding: 4px 0;
+  letter-spacing: 1px;
 }
 .poster-grid{
   flex: 1;
@@ -421,14 +416,22 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   line-height: 1;
 }
 .poster .caption{
-  position: absolute;
-  top: calc(50% - var(--cap-offset-y, 0px));
-  left: calc(50% - var(--cap-offset-x, 0px));
   display: flex;
   flex-direction: column;
   gap: 2px;
-  text-align: left;
   z-index: 2;
+}
+.poster.mode-image .caption{
+  position: absolute;
+  top: calc(50% - var(--cap-offset-y, 100px));
+  left: calc(50% - var(--cap-offset-x, 100px));
+  text-align: left;
+}
+.poster.mode-grid .caption{
+  position: static;
+  align-self: center;
+  text-align: center;
+  margin-top: 4px;
 }
 .poster .caption .cap-nm{ display: block; }
 .poster .caption .cap-dex{ display: block; opacity: .6; }
@@ -807,6 +810,12 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       <summary>Poster Settings</summary>
       <div class="section-body">
         <div class="row">
+          <label>Mode
+            <select id="posterMode">
+              <option value="image" selected>Image</option>
+              <option value="grid">Grid</option>
+            </select>
+          </label>
           <label style="align-self:center"><input id="posterBestFit" type="checkbox" checked> Best fit</label>
           <div id="posterGridSizeWrap" style="display:none; gap:8px">
             <label>Cols <input id="posterCols" type="number" value="9" min="1" max="20"></label>
@@ -819,8 +828,8 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
           <label>Caption color <input id="capColor" type="color" value="#111111"></label>
-          <label>Offset X <input id="capOffsetX" type="number" value="100" min="-400" max="400" step="1"></label>
-          <label>Offset Y <input id="capOffsetY" type="number" value="100" min="-400" max="400" step="1"></label>
+          <label id="capOffsetXRow">Offset X <input id="capOffsetX" type="number" value="100" min="-400" max="400" step="1"></label>
+          <label id="capOffsetYRow">Offset Y <input id="capOffsetY" type="number" value="100" min="-400" max="400" step="1"></label>
           <label style="flex-direction:row;gap:8px;align-items:center">
             <div class="toggle">
               <input id="posterShowCaption" type="checkbox" checked>
@@ -834,6 +843,18 @@ body[data-exporting="1"] .stage{ transform: none !important; }
               <div class="toggle-track"></div>
             </div>
             Show title
+          </label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterBlueNoise" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Blue noise
+          </label>
+        </div>
+        <div class="row" id="posterCustomTitleRow" style="display:none">
+          <label style="flex:1">Custom title
+            <input id="posterCustomTitle" type="text" placeholder="e.g. MY FAVORITES" style="width:100%;font-family:'VT323',monospace;font-size:18px">
           </label>
         </div>
         <div class="row">
@@ -1062,16 +1083,16 @@ const GEN_REGIONS = {
   6:'KALOS', 7:'ALOLA', 8:'GALAR', 9:'PALDEA', all:'ALL REGIONS'
 };
 const GEN_DESC = {
-  1:  ['151 Pokémon', 'The original region'],
-  2:  ['100 Pokémon', 'Land of tradition'],
-  3:  ['135 Pokémon', 'The tropical region'],
-  4:  ['107 Pokémon', 'Land of myth'],
-  5:  ['156 Pokémon', 'The metropolitan region'],
-  6:  ['72 Pokémon',  'The beautiful region'],
-  7:  ['88 Pokémon',  'Island paradise'],
-  8:  ['96 Pokémon',  'The industrial region'],
-  9:  ['120 Pokémon', 'Land of adventure'],
-  all:['1025 Pokémon','All regions combined'],
+  1:  'The original region',
+  2:  'Land of tradition',
+  3:  'The tropical region',
+  4:  'Land of myth',
+  5:  'The metropolitan region',
+  6:  'The beautiful region',
+  7:  'Island paradise',
+  8:  'The industrial region',
+  9:  'Land of adventure',
+  all:'All regions combined',
 };
 const API_GEN_TO_REGION = {
   'generation-i':'KANTO','generation-ii':'JOHTO','generation-iii':'HOENN',
@@ -1214,7 +1235,8 @@ function spriteSize(w, h, style){
 // Poster-specific sprite size: fills cell minus caption height, respects pxScale for pixel art
 function posterImgSize(cellW, cellH, style){
   const showCap = el('posterShowCaption').checked;
-  const captionH = showCap ? parseInt(v('capPx')) + 4 : 0;
+  const isGrid  = (v('posterMode') || 'image') === 'grid';
+  const captionH = (showCap && isGrid) ? parseInt(v('capPx')) + 4 : 0;
   const avail = Math.min(cellW, cellH - captionH);
   if(style !== 'pixel') return Math.floor(avail);
   const base = 96;
@@ -1269,6 +1291,36 @@ async function buildChainsFromList(list){
 // ╔══════════════════════════════════╗
 // ║  8. RENDER: POSTER                ║
 // ╚══════════════════════════════════╝
+
+// Mitchell's best-candidate blue noise shuffle for 2D grids
+function blueNoiseShuffle(list, cols) {
+  const n = list.length;
+  if(n < 2) return [...list];
+  const rows = Math.ceil(n / cols);
+  const px = i => (i % cols) / Math.max(cols - 1, 1);
+  const py = i => Math.floor(i / cols) / Math.max(rows - 1, 1);
+  const d2 = (a, b) => { const dx = px(a)-px(b), dy = py(a)-py(b); return dx*dx+dy*dy; };
+
+  const avail = [...Array(n).keys()];
+  const order = [avail.splice(Math.floor(Math.random()*n), 1)[0]];
+  while(avail.length) {
+    const k = Math.min(avail.length, 30);
+    let best = -1, bestD = -1;
+    for(let t = 0; t < k; t++){
+      const ri = Math.floor(Math.random() * avail.length);
+      const cand = avail[ri];
+      let minD = Infinity;
+      for(const p of order) minD = Math.min(minD, d2(cand, p));
+      if(minD > bestD){ bestD = minD; best = ri; }
+    }
+    order.push(avail.splice(best, 1)[0]);
+  }
+  // order[i] = grid position where list[i] goes
+  const result = new Array(n);
+  for(let i = 0; i < n; i++) result[order[i]] = list[i];
+  return result;
+}
+
 async function renderPoster(list){
   let cols = +v('posterCols'), rows = +v('posterRows');
   const gapX = +v('posterGapX'), gapY = +v('posterGapY'), pad = +v('posterPad');
@@ -1287,6 +1339,8 @@ async function renderPoster(list){
 
   const showCaption = el('posterShowCaption').checked;
   const showTitle   = el('posterShowTitle').checked;
+  const posterMode  = v('posterMode') || 'image';
+  const blueNoise   = el('posterBlueNoise').checked;
 
   // Detect multi-region: custom IDs spanning >1 generation, or gen=all
   const gen = v('gen');
@@ -1300,8 +1354,9 @@ async function renderPoster(list){
   const overlapY = gapY < 0 ? Math.abs(gapY) : 0;
 
   if(el('posterBestFit').checked && list.length){
+    const captionInFlow = el('posterShowCaption').checked && posterMode === 'grid';
     ({ cols, rows } = bestFitLayout(list.length, pad, titleH, capPx, style,
-      el('posterShowCaption').checked, overlapX, overlapY));
+      captionInFlow, overlapX, overlapY));
   }
   setVar('--poster-cols', cols);
   setVar('--poster-rows', rows);
@@ -1314,18 +1369,23 @@ async function renderPoster(list){
   root.innerHTML = '';
 
   // Title data
-  const region = GEN_REGIONS[gen] || 'REGION';
+  const isCustomList = parseIds(el('specificIds').value).length > 0;
+  const region   = GEN_REGIONS[gen] || 'REGION';
   const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
-  const [descLine1, descLine2] = GEN_DESC[gen] || ['', ''];
+  const regionDesc = GEN_DESC[gen] || '';
+  const customTitle = v('posterCustomTitle').trim().toUpperCase() || 'MY COLLECTION';
+
+  // Apply blue noise shuffle before chunking
+  const orderedList = blueNoise ? blueNoiseShuffle(list, cols) : list;
 
   // Chunk list into pages
   const pageSize = cols * rows;
   const chunks = [];
-  for(let i = 0; i < list.length; i += pageSize) chunks.push(list.slice(i, i + pageSize));
+  for(let i = 0; i < orderedList.length; i += pageSize) chunks.push(orderedList.slice(i, i + pageSize));
   if(!chunks.length) chunks.push([]);
 
   for(let pi = 0; pi < chunks.length; pi++){
-    const page = document.createElement('div'); page.className = 'page poster';
+    const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
     const inner = document.createElement('div'); inner.className = 'inner';
 
     // Grid first (title goes at bottom)
@@ -1345,19 +1405,23 @@ async function renderPoster(list){
 
     inner.appendChild(grid);
 
-    // Title at bottom-center (first page only, single-region, when shown)
-    if(!multiRegion && pi === 0 && showTitle){
+    // Title at bottom-center (first page only, when shown)
+    if(pi === 0 && showTitle){
       const title = document.createElement('div'); title.className = 'poster-title';
-      title.innerHTML = `
-        <div class="title-main">
-          <span class="gen-label">${genLabel}</span>
-          <span class="title-sep">|</span>
-          <span class="reg-label">${region}</span>
-        </div>
-        <div class="title-desc-wrap">
-          <span>${descLine1}</span>
-          <span>${descLine2}</span>
-        </div>`;
+      if(isCustomList){
+        title.innerHTML = `
+          <div class="title-main">
+            <span class="reg-label">${customTitle}</span>
+          </div>`;
+      } else {
+        title.innerHTML = `
+          <div class="title-main">
+            <span class="gen-label">${genLabel}</span>
+            <span class="title-sep">|</span>
+            <span class="reg-label">${region}</span>
+          </div>
+          <div class="title-desc-wrap">${regionDesc}</div>`;
+      }
       inner.appendChild(title);
     }
     page.appendChild(inner);
@@ -1581,11 +1645,23 @@ async function build(){
 [
   'gen','style','pxScale','snapInt','zoom','specificIds',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
-  'capPx','capColor','capOffsetX','capOffsetY','posterShowCaption','posterShowTitle','posterRandomCount',
+  'posterMode','capPx','capColor','capOffsetX','capOffsetY',
+  'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle','posterRandomCount',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
 ].forEach(id => el(id).addEventListener('input', debouncedBuild));
+
+function syncPosterUI(){
+  const isImage = (v('posterMode') || 'image') === 'image';
+  const isCustom = parseIds(el('specificIds').value).length > 0 || false;
+  el('capOffsetXRow').style.display = isImage ? '' : 'none';
+  el('capOffsetYRow').style.display = isImage ? '' : 'none';
+  el('posterCustomTitleRow').style.display = isCustom ? '' : 'none';
+}
+el('posterMode').addEventListener('change', () => { syncPosterUI(); });
+el('specificIds').addEventListener('input', syncPosterUI);
+syncPosterUI();
 
 function syncBestFitUI(){
   const on = el('posterBestFit').checked;
