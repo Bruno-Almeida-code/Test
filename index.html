@@ -829,6 +829,16 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <div id="typeFilter" style="display:flex;flex-wrap:wrap;gap:4px"></div>
           <button id="clearTypesBtn" style="font-size:11px;padding:2px 8px;margin-left:4px">Clear</button>
         </div>
+        <div class="row" style="gap:8px;align-items:center">
+          <button id="addAllTypeBtn" style="font-size:11px;padding:3px 10px">Add all selected types</button>
+          <label style="flex-direction:row;gap:6px;align-items:center;font-size:12px">
+            Sort by
+            <select id="sortBy" style="font-size:12px;padding:2px 4px">
+              <option value="number">Number</option>
+              <option value="type">Type</option>
+            </select>
+          </label>
+        </div>
       </div>
     </details>
 
@@ -1142,6 +1152,9 @@ const GEN_ID_RANGES = {
   1:[1,151],2:[152,251],3:[252,386],4:[387,493],5:[494,649],
   6:[650,721],7:[722,809],8:[810,905],9:[906,1010],all:[1,1010]
 };
+const TYPE_ORDER = ['normal','fire','water','electric','grass','ice','fighting','poison',
+  'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+const typeIdx = t => { const i = TYPE_ORDER.indexOf(t); return i >= 0 ? i : 99; };
 
 // Build type filter pill buttons
 (function initTypeFilter(){
@@ -1163,6 +1176,21 @@ const GEN_ID_RANGES = {
 })();
 el('clearTypesBtn').addEventListener('click', () => {
   document.querySelectorAll('#typeFilter .type-pill.active').forEach(p => p.classList.remove('active'));
+  debouncedBuild();
+});
+
+el('addAllTypeBtn').addEventListener('click', async () => {
+  const selectedTypes = [...document.querySelectorAll('#typeFilter .type-pill.active')].map(p => p.dataset.type);
+  if(!selectedTypes.length) return;
+  const typeData = await Promise.all(selectedTypes.map(t => cachedFetch(`https://pokeapi.co/api/v2/type/${t}/`)));
+  const ids = new Set();
+  for(const td of typeData){
+    for(const p of td.pokemon){
+      const pid = +p.pokemon.url.split('/').slice(-2,-1)[0];
+      if(pid >= 1 && pid <= 1010) ids.add(pid);
+    }
+  }
+  el('specificIds').value = [...ids].sort((a,b) => a-b).join(', ');
   debouncedBuild();
 });
 
@@ -1477,6 +1505,8 @@ async function renderPoster(list){
   for(let pi = 0; pi < chunks.length; pi++){
     const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
     const inner = document.createElement('div'); inner.className = 'inner';
+    // Reserve extra bottom space for title so grid never overlaps it
+    if(pi === 0 && showTitle) inner.style.paddingBottom = (pad + titleH) + 'px';
 
     if(posterMode === 'scatter'){
       // Scatter: blue-noise continuous positions, no grid
@@ -1765,6 +1795,13 @@ async function build(){
       }
     }
 
+    // Sort by type if requested
+    if(v('sortBy') === 'type' && list.length){
+      const typeData = await Promise.all(list.map(pk => pokemonData(pk.id).catch(() => ({types:['normal']}))));
+      const typeMap = new Map(list.map((pk, i) => [pk.id, typeData[i].types?.[0] || 'normal']));
+      list = [...list].sort((a, b) => typeIdx(typeMap.get(a.id)) - typeIdx(typeMap.get(b.id)) || a.id - b.id);
+    }
+
     if(MODE.get() === 'poster') await renderPoster(list);
     else await renderCards(list);
   } finally {
@@ -1777,7 +1814,7 @@ async function build(){
 // ║  11. EVENT WIRING                 ║
 // ╚══════════════════════════════════╝
 [
-  'gen','style','pxScale','snapInt','zoom','specificIds',
+  'gen','style','pxScale','snapInt','zoom','specificIds','sortBy',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
   'posterMode','posterFont','capPx','capColor','capOffsetX','capOffsetY',
   'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle',
