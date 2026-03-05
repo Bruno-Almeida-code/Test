@@ -809,7 +809,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
           <label style="width:100%">Custom IDs (optional)
             <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
           </label>
-          <button id="randomIdsBtn" title="Pick 150 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 150 Random</button>
+          <button id="randomIdsBtn" title="Pick 152 random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 152 Random</button>
           <button id="cleanBtn" title="Reset to default" style="align-self:flex-end;margin-bottom:2px">✕ Clean</button>
         </div>
         <div class="row" style="flex-wrap:wrap;gap:6px;align-items:center">
@@ -842,9 +842,9 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             <label>Cols <input id="posterCols" type="number" value="9" min="1" max="20"></label>
             <label>Rows <input id="posterRows" type="number" value="13" min="1" max="60"></label>
           </div>
-          <label>Gap X px <input id="posterGapX" type="number" value="-20" min="-300" max="200" step="1"></label>
-          <label>Gap Y px <input id="posterGapY" type="number" value="-20" min="-300" max="200" step="1"></label>
-          <label>Padding <input id="posterPad" type="number" value="10" min="0" max="200"></label>
+          <label>Gap X px <input id="posterGapX" type="number" value="-20" min="-5000" max="200" step="1"></label>
+          <label>Gap Y px <input id="posterGapY" type="number" value="-20" min="-5000" max="200" step="1"></label>
+          <label>Padding <input id="posterPad" type="number" value="10" min="0" max="500"></label>
         </div>
         <div class="row">
           <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
@@ -1746,9 +1746,14 @@ syncBestFitUI();
 el('posterImagePreset').addEventListener('change', () => {
   if(!el('posterImagePreset').checked) return;
   el('posterMode').value = 'image';
-  el('posterGapX').value = '-20';
-  el('posterGapY').value = '-20';
-  el('posterBestFit').checked = true;
+  el('posterBestFit').checked = false;
+  el('posterCols').value = '9';
+  el('posterRows').value = '17';
+  el('posterGapX').value = '-2000';
+  el('posterGapY').value = '-500';
+  el('posterPad').value = '250';
+  el('posterShowCaption').checked = false;
+  el('posterShowTitle').checked = true;
   syncPosterUI();
   syncBestFitUI();
   debouncedBuild();
@@ -1777,7 +1782,7 @@ el('randomIdsBtn').addEventListener('click', async () => {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  const picks = pool.slice(0, Math.min(150, pool.length));
+  const picks = pool.slice(0, Math.min(152, pool.length));
   el('specificIds').value = picks.sort((a,b) => a-b).join(', ');
   debouncedBuild();
 });
