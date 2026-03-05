@@ -428,6 +428,15 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   margin-left:   calc(var(--poster-neg-col, 0px) * -0.5);
   margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
 }
+.poster.row-fade .cell::after{
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: var(--img, 96px);
+  background: linear-gradient(to top, white, transparent);
+  pointer-events: none;
+  z-index: 3;
+}
 .caption{
   font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   font-size: var(--poster-name-fz);
@@ -902,6 +911,13 @@ body[data-exporting="1"] .stage{ transform: none !important; }
               <div class="toggle-track"></div>
             </div>
             Blue noise
+          </label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterRowFade" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Row fade
           </label>
         </div>
         <div class="row" id="posterCustomTitleRow">
@@ -1563,7 +1579,8 @@ async function renderPoster(list){
   if(!chunks.length) chunks.push([]);
 
   for(let pi = 0; pi < chunks.length; pi++){
-    const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
+    const rowFade = el('posterRowFade').checked;
+    const page = document.createElement('div'); page.className = `page poster mode-${posterMode}${rowFade ? ' row-fade' : ''}`;
     const inner = document.createElement('div'); inner.className = 'inner';
     // Reserve extra bottom space for title so grid never overlaps it
     if(pi === 0 && showTitle) inner.style.paddingBottom = (pad + titleH) + 'px';
@@ -1877,7 +1894,7 @@ async function build(){
   'gen','style','pxScale','snapInt','zoom','specificIds','sortBy',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
   'posterMode','posterFont','capPx','capColor','capOffsetX','capOffsetY',
-  'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle',
+  'posterShowCaption','posterShowTitle','posterBlueNoise','posterRowFade','posterCustomTitle',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
