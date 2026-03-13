@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PURGATÓRIO</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;font-family:'IBM Plex Mono','Courier New',monospace}
+.screen{width:100vw;aspect-ratio:16/9;max-height:100vh;display:flex;flex-direction:column;padding:20px 30px 13px;position:relative;transition:background .4s,color .4s}
+/* corner marks */
+.screen::after{content:'';position:absolute;inset:8px;pointer-events:none;
+  background:linear-gradient(currentColor,currentColor) top left/16px 1px no-repeat,
+    linear-gradient(currentColor,currentColor) top left/1px 16px no-repeat,
+    linear-gradient(currentColor,currentColor) top right/16px 1px no-repeat,
+    linear-gradient(currentColor,currentColor) top right/1px 16px no-repeat,
+    linear-gradient(currentColor,currentColor) bottom left/16px 1px no-repeat,
+    linear-gradient(currentColor,currentColor) bottom left/1px 16px no-repeat,
+    linear-gradient(currentColor,currentColor) bottom right/16px 1px no-repeat,
+    linear-gradient(currentColor,currentColor) bottom right/1px 16px no-repeat;
+  opacity:.14}
+/* ── LIGHT THEME ── */
+body.light{background:#F2EDE4;color:#1A1510}
+body.light .hd{border-bottom-color:rgba(26,21,16,.12)}
+body.light .ft{border-top-color:rgba(26,21,16,.12)}
+body.light .sys-id,.body.light .sub,.body.light .mc{color:#8A8070}
+body.light .pill{border-color:rgba(26,21,16,.16);color:#8A8070}
+body.light .tbtn,.body.light .langbtn{border-color:rgba(26,21,16,.16);color:rgba(26,21,16,.4)}
+body.light .ve{color:#782018}
+/* ── NGE THEME ── */
+body.nge{background:#0A0C06;color:#4CFF6A}
+body.nge .screen::after{opacity:.22}
+body.nge .hd{border-bottom-color:rgba(76,255,106,.15)}
+body.nge .ft{border-top-color:rgba(76,255,106,.15)}
+body.nge .sys-id,.body.nge .sub,.body.nge .mc{color:rgba(76,255,106,.5)}
+body.nge .pill{border-color:rgba(76,255,106,.25);color:rgba(76,255,106,.5)}
+body.nge .tbtn,.body.nge .langbtn{border-color:rgba(76,255,106,.2);color:rgba(76,255,106,.45)}
+body.nge .ve{color:#FF4400}
+body.nge .v{color:#FF9500}
+/* shared */
+.hd{flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid;gap:12px;transition:border-color .4s}
+.sys-id{font-size:6.5px;letter-spacing:.28em;margin-bottom:3px;opacity:.7}
+.title{font-family:'IBM Plex Mono','Courier New',monospace;font-size:clamp(20px,3.2vw,44px);font-weight:300;font-synthesis:none;letter-spacing:.22em;line-height:1;text-transform:uppercase}
+.sub{font-size:6.5px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:3px}
+.hd-right{display:flex;gap:20px;align-items:flex-end;flex-shrink:0}
+.mc{text-align:right;font-size:6.5px;letter-spacing:.1em;opacity:.6;line-height:2.1}
+.v{color:inherit;opacity:1!important}
+.ve{font-weight:400}
+.pill{font-size:6px;letter-spacing:.16em;text-transform:uppercase;border:1px solid;padding:3px 8px;white-space:nowrap;opacity:.7}
+.langbtn,.tbtn{font-family:'IBM Plex Mono',monospace;font-size:6px;letter-spacing:.13em;background:none;border:1px solid;padding:3px 9px;cursor:pointer;text-transform:uppercase;opacity:.46;transition:opacity .15s,border-color .4s,color .4s}
+.tbtn.on{opacity:1}
+.chart-wrap{flex:1;min-height:0}
+#chart{width:100%;height:100%;display:block}
+.ft{flex-shrink:0;padding-top:6px;border-top:1px solid;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color .4s}
+.legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.li{display:flex;align-items:center;gap:5px;font-size:6px;letter-spacing:.06em;text-transform:uppercase;opacity:.55}
+.ls{flex-shrink:0;width:14px;border-radius:1px;opacity:.7}
+.ft-right{font-size:6px;letter-spacing:.12em;opacity:.28;text-align:right;line-height:1.9;flex-shrink:0}
+.controls{position:fixed;bottom:11px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;font-size:6.5px;letter-spacing:.09em;padding:5px 13px;border:1px solid;z-index:10;white-space:nowrap;transition:background .4s,border-color .4s,color .4s}
+body.light .controls{background:rgba(242,237,228,.96);border-color:rgba(26,21,16,.1);color:rgba(26,21,16,.42)}
+body.nge .controls{background:rgba(10,12,6,.97);border-color:rgba(76,255,106,.15);color:rgba(76,255,106,.55)}
+.ctrl{display:flex;align-items:center;gap:6px}
+.cdiv{width:1px;height:12px;opacity:.15;background:currentColor}
+input[type=range]{width:70px;opacity:.44;cursor:pointer}
+.cv{min-width:26px;font-size:6px}
+#cSl{accent-color:#1A1510}#pSl{accent-color:#782018}#bSl{accent-color:#48785A}#bySl{accent-color:#967828}#smSl{accent-color:#5A7EA0}
+body.nge #cSl{accent-color:#4CFF6A}body.nge #pSl{accent-color:#FF4400}body.nge #bSl{accent-color:#4CFF6A}body.nge #bySl{accent-color:#FF9500}body.nge #smSl{accent-color:#4CFF6A}
+</style>
+</head>
+<body class="light">
+<div class="screen">
+  <div class="hd">
+    <div>
+      <div class="sys-id">EARTH_HUMANITY_41 // <span id="s-dept"></span></div>
+      <div class="title" id="s-title"></div>
+      <div class="sub" id="s-sub"></div>
+    </div>
+    <div class="hd-right">
+      <div class="mc">
+        <span id="s-backlog"></span><br><span class="v" id="stat-yrs">108</span> <span id="s-years"></span>
+      </div>
+      <div class="mc">
+        <span id="s-errors"></span><br><span class="ve" id="stat-errors">—</span><br><br>
+        <span id="s-queue"></span><br><span class="v" id="stat-queue">~515M</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <div class="pill">ARBITER v1.0 — <span id="s-active"></span></div>
+        <button class="langbtn" id="s-langbtn" onclick="toggleLang()"></button>
+      </div>
+    </div>
+  </div>
+  <div class="chart-wrap"><svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="ft">
+    <div class="legend">
+      <div class="li"><div class="ls" id="ls-eu" style="height:5px"></div><span id="s-eu"></span></div>
+      <div class="li"><div class="ls" id="ls-as" style="height:10px"></div><span id="s-as"></span></div>
+      <div class="li"><div class="ls" id="ls-af" style="height:7px"></div><span id="s-af"></span></div>
+      <div class="li"><div class="ls" id="ls-am" style="height:3px"></div><span id="s-am"></span></div>
+      <span class="li" style="margin-left:6px;opacity:.38" id="s-note"></span>
+    </div>
+    <div class="ft-right" id="s-footer"></div>
+  </div>
+</div>
+<div class="controls">
+  <div class="ctrl"><span id="s-conv"></span><input type="range" id="cSl" min="0" max="95" value="50"><span class="cv" id="cVal">50%</span></div>
+  <div class="cdiv"></div>
+  <div class="ctrl"><span id="s-processed"></span><input type="range" id="pSl" min="0" max="100" value="0"><span class="cv" id="pVal">0M</span></div>
+  <div class="cdiv"></div>
+  <div class="ctrl"><span id="s-bias"></span><input type="range" id="bSl" min="0" max="800" value="0"><span class="cv" id="bVal">0×</span></div>
+  <div class="cdiv"></div>
+  <div class="ctrl"><span id="s-biasyr"></span><input type="range" id="bySl" min="1918" max="2026" value="1980"><span class="cv" id="byVal">1980</span></div>
+  <div class="cdiv"></div>
+  <div class="ctrl"><span id="s-smooth"></span><input type="range" id="smSl" min="0" max="80" value="0"><span class="cv" id="smVal">0</span></div>
+  <div class="cdiv"></div>
+  <button class="tbtn off" id="stackBtn" onclick="toggleStack()">SOMA</button>
+  <div class="cdiv"></div>
+  <button class="tbtn off" id="ngeBtn" onclick="toggleNge()">NGE</button>
+</div>
+<script>
+// ── STATE ───────────────────────────────────────────────────────
+let CONV_FRAC = 0.50;
+let PROC_FRAC = 0.00;
+let BIAS      = 0.00;
+let BIAS_YR   = 1980;
+let SMOOTH    = 0;
+let STACKED   = false;
+let NGE       = false;
+let LANG      = 'pt';
+// ── THEMES ──────────────────────────────────────────────────────
+const THEMES = {
+  light:{
+    bg:'#F2EDE4', ink:'rgba(26,21,16,1)', mut:'rgba(26,21,16,.38)',
+    rule:'rgba(26,21,16,.10)', grid:'rgba(26,21,16,.023)',
+    ceu:'rgba(120,96,24,.72)', inf:'rgba(120,32,24,.72)',
+    ceuA:'rgba(120,96,24,.45)', infA:'rgba(120,32,24,.45)',
+    posto:'rgba(26,21,16,.26)', arb:'rgba(26,21,16,.12)',
+    axis:'rgba(26,21,16,.10)', tick:'rgba(26,21,16,.18)',
+    ann:'rgba(26,21,16,.16)', bias:'rgba(150,120,40,.08)',
+    clear:'#F2EDE4',
+    colors:['#5A7EA0','#B06830','#48785A','#967828'],
+    lsColors:['#5A7EA0','#B06830','#48785A','#967828'],
+  },
+  nge:{
+    bg:'#0A0C06', ink:'rgba(76,255,106,1)', mut:'rgba(76,255,106,.45)',
+    rule:'rgba(76,255,106,.12)', grid:'rgba(76,255,106,.04)',
+    ceu:'rgba(76,200,255,.72)', inf:'rgba(255,68,0,.72)',
+    ceuA:'rgba(76,200,255,.4)', infA:'rgba(255,68,0,.4)',
+    posto:'rgba(76,255,106,.35)', arb:'rgba(76,255,106,.18)',
+    axis:'rgba(76,255,106,.12)', tick:'rgba(76,255,106,.3)',
+    ann:'rgba(76,255,106,.22)', bias:'rgba(255,149,0,.08)',
+    clear:'#0A0C06',
+    colors:['#1A8CFF','#FF6600','#00CC44','#FFAA00'],
+    lsColors:['#1A8CFF','#FF6600','#00CC44','#FFAA00'],
+  }
+};
+function T(){ return NGE ? THEMES.nge : THEMES.light; }
+function applyThemeColors(){
+  const t=T();
+  const ids=['ls-eu','ls-as','ls-af','ls-am'];
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.style.background=t.lsColors[i];
+  });
+}
+// ── i18n ────────────────────────────────────────────────────────
+const STR = {
+  pt:{
+    title:'Purgatório',dept:'DEPARTAMENTO DE RECURSOS IMORTAIS',
+    sub:'Fluxo de almas por continente — 1918 a 2026',
+    backlog:'BACKLOG',years:'ANOS',errors:'ERROS ACTIVOS',
+    queue:'TOTAL EM FILA',active:'ACTIVO',langbtn:'Switch to EN',
+    eu:'Europa — 82M mortos',as:'Ásia — 247M mortos',
+    af:'África — 138M mortos',am:'Américas — 48M mortos',
+    note:'Mortes estimadas 1918–2026. Largura ∝ mortalidade anual.',
+    footer:'SISTEMA INTERNO — NÃO DISTRIBUIR<br>EARTH_HUMANITY_41 // VERSÃO 41',
+    conv:'CONV.',processed:'PROC.',bias:'DENS.',biasyr:'DE',smooth:'SUAV.',
+    covid:'COVID-19',wwii:'2ª G. Mundial',leap:'Grande Salto',
+    famine:'Fome — Etiópia',flu:'Gripe Espanhola',
+    posto:'POSTO DE TRIAGEM',ceu:'Céu',ceusub:'DEFAULT: SIM',
+    inf:'Inferno',infsub:'RECL.: 441+'
+  },
+  en:{
+    title:'Purgatory',dept:'DEPARTMENT OF IMMORTAL RESOURCES',
+    sub:'Soul flow by continent — 1918 to 2026',
+    backlog:'BACKLOG',years:'YEARS',errors:'ACTIVE ERRORS',
+    queue:'TOTAL IN QUEUE',active:'ACTIVE',langbtn:'Mudar para PT',
+    eu:'Europe — 82M deaths',as:'Asia — 247M deaths',
+    af:'Africa — 138M deaths',am:'Americas — 48M deaths',
+    note:'Estimated deaths 1918–2026. Width ∝ annual mortality.',
+    footer:'INTERNAL USE ONLY — DO NOT DISTRIBUTE<br>EARTH_HUMANITY_41 // VERSION 41',
+    conv:'CONV.',processed:'PROC.',bias:'DENS.',biasyr:'FROM',smooth:'SMOOTH',
+    covid:'COVID-19',wwii:'World War II',leap:'Great Leap Fwd',
+    famine:'Famine — Ethiopia',flu:'Spanish Flu',
+    posto:'TRIAGE STATION',ceu:'Heaven',ceusub:'DEFAULT: YES',
+    inf:'Hell',infsub:'CLAIMS: 441+'
+  }
+};
+function applyLang(){
+  const L=STR[LANG];
+  ['title','dept','sub','backlog','years','errors','queue','active','langbtn',
+   'eu','as','af','am','note','footer','conv','processed','bias','biasyr','smooth'
+  ].forEach(k=>{const el=document.getElementById('s-'+k);if(el)el.innerHTML=L[k]||'';});
+}
+function updateStats(){
+  const proc=Math.round(PROC_FRAC*515);
+  const rem=515-proc;
+  const yrsL=Math.round((1-PROC_FRAC)*108);
+  const peak=247891;
+  let err=0;
+  if(PROC_FRAC<0.18)      err=Math.round(PROC_FRAC/0.18*peak*0.02);
+  else if(PROC_FRAC<0.65) err=Math.round(peak*Math.pow((PROC_FRAC-0.18)/0.47,0.55));
+  else                    err=Math.round(peak*(1-Math.pow((PROC_FRAC-0.65)/0.35,0.65)));
+  document.getElementById('stat-yrs').textContent=yrsL;
+  document.getElementById('stat-errors').textContent=err>0?err.toLocaleString('pt-PT'):'—';
+  document.getElementById('stat-queue').textContent='~'+rem+'M';
+}
+function toggleLang(){ LANG=LANG==='pt'?'en':'pt'; applyLang(); updateStats(); render(); }
+function toggleStack(){ STACKED=!STACKED; document.getElementById('stackBtn').className='tbtn '+(STACKED?'on':'off'); render(); }
+function toggleNge(){
+  NGE=!NGE;
+  document.body.className=NGE?'nge':'light';
+  document.getElementById('ngeBtn').className='tbtn '+(NGE?'on':'off');
+  applyThemeColors();
+  render();
+}
+// ── DATA ────────────────────────────────────────────────────────
+const SCALE=4.2;
+const ANCHORS={
+  eu:[[1918,5.8],[1919,4.8],[1920,4.0],[1922,3.4],[1925,2.7],[1928,2.5],[1930,2.4],
+      [1932,2.6],[1935,2.9],[1937,3.5],[1938,4.2],[1939,6.5],[1940,9.5],[1941,13.0],
+      [1942,15.5],[1943,17.0],[1944,16.5],[1945,14.0],[1946,9.0],[1947,6.5],[1948,4.8],
+      [1950,3.4],[1952,2.8],[1955,2.2],[1960,1.7],[1965,1.5],[1970,1.4],[1975,1.4],
+      [1980,1.3],[1990,1.4],[2000,1.2],[2010,1.2],[2019,1.3],[2020,3.4],[2021,2.6],
+      [2022,1.9],[2023,1.5],[2026,1.2]],
+  as:[[1918,8.8],[1919,7.0],[1920,5.5],[1925,4.5],[1930,4.0],[1935,5.0],[1938,6.5],
+      [1939,8.0],[1940,10.5],[1941,14.0],[1942,17.0],[1943,19.5],[1944,18.5],[1945,17.0],
+      [1946,14.0],[1947,13.0],[1948,12.0],[1950,8.5],[1952,10.0],[1957,7.5],[1958,9.0],
+      [1959,14.0],[1960,17.5],[1961,19.0],[1962,20.5],[1963,21.0],[1964,18.0],[1965,14.0],
+      [1966,11.0],[1968,7.5],[1970,5.5],[1975,7.0],[1980,4.2],[1990,2.8],[2000,2.5],
+      [2010,2.0],[2019,2.3],[2020,5.2],[2021,4.0],[2022,3.2],[2023,2.5],[2026,2.0]],
+  af:[[1918,4.4],[1920,4.2],[1925,4.0],[1930,3.8],[1938,3.8],[1939,4.0],[1941,4.5],
+      [1943,5.5],[1945,5.0],[1950,3.5],[1960,2.9],[1970,2.5],[1978,2.6],[1980,3.2],
+      [1981,5.0],[1982,7.2],[1983,9.0],[1984,11.2],[1985,10.5],[1986,8.5],[1987,7.0],
+      [1988,5.5],[1990,3.8],[1992,5.0],[1993,7.0],[1994,10.5],[1995,7.5],[1997,5.0],
+      [2000,5.5],[2005,4.0],[2010,2.2],[2019,1.4],[2020,2.2],[2023,1.4],[2026,1.2]],
+  am:[[1918,3.4],[1920,2.7],[1925,2.2],[1930,2.0],[1938,2.4],[1939,2.6],[1940,3.8],
+      [1941,5.2],[1942,5.8],[1943,6.5],[1944,6.2],[1945,5.5],[1946,3.5],[1950,2.1],
+      [1960,1.6],[1970,1.5],[1980,1.4],[1990,1.3],[2000,1.3],[2010,1.2],[2019,1.5],
+      [2020,4.8],[2021,3.5],[2022,2.4],[2023,1.7],[2026,1.2]]
+};
+const KEYS=['eu','as','af','am'];
+const START_FRAC=[0.22,0.37,0.55,0.70];
+function interp(pts,y){
+  if(y<=pts[0][0]) return pts[0][1];
+  if(y>=pts[pts.length-1][0]) return pts[pts.length-1][1];
+  for(let i=0;i<pts.length-1;i++){
+    if(y>=pts[i][0]&&y<=pts[i+1][0]){
+      const a=(y-pts[i][0])/(pts[i+1][0]-pts[i][0]);
+      return pts[i][1]+(pts[i+1][1]-pts[i][1])*a;
+    }
+  }
+  return 0;
+}
+function hwRaw(yr,ci){
+  const v=interp(ANCHORS[KEYS[ci]],yr);
+  const taper=Math.max(0,Math.min(1,(yr-1917)/1.5));
+  return v*SCALE*taper;
+}
+function totalMort(yr){
+  let s=0; for(let ci=0;ci<4;ci++) s+=interp(ANCHORS[KEYS[ci]],yr);
+  return Math.max(0.05,s);
+}
+// ── SVG ─────────────────────────────────────────────────────────
+const svg=document.getElementById('chart');
+const NS='http://www.w3.org/2000/svg';
+function mk(tag,a){const e=document.createElementNS(NS,tag);if(a)for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e;}
+function tx(x,y,str,a){const e=mk('text',a);e.setAttribute('x',x);e.setAttribute('y',y);e.textContent=str;return e;}
+// ── RENDER ──────────────────────────────────────────────────────
+function render(){
+  const W=svg.clientWidth||900, H=svg.clientHeight||400;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const L=STR[LANG];
+  const t=T();
+  const COLORS=t.colors;
+  const MLEFT=148, R=Math.min(46,H*.09);
+  const PX=Math.round(W*.845), PY=H*.50, EX=PX-R;
+  const YR_L=2026, YR_R=1917+Math.round(PROC_FRAC*109);
+  const RSPAN=EX-MLEFT;
+  // ── DENSITY AXIS ────────────────────────────────────────────
+  // V13 logic: chart spans only unprocessed years (YR_R → YR_L)
+  // As PROC_FRAC rises, YR_R advances and the chart contracts from the right.
+  const YRS=[];
+  for(let y=YR_L; y>=YR_R; y--) YRS.push(y);
+  let avgSum=0;
+  for(let y=YR_R;y<=YR_L;y++) avgSum+=totalMort(y);
+  const avgM=avgSum/Math.max(1,YR_L-YR_R+1);
+  const WTS=YRS.map(y=>{
+    if(y<BIAS_YR) return 1.0;
+    const d=totalMort(y)/avgM;
+    return Math.min(1.0, Math.max(0.002, Math.pow(Math.max(0.002,d), BIAS)));
+  });
+  const totalW=WTS.reduce((a,b)=>a+b,0);
+  let cw=0;
+  const cumX=YRS.map((_,i)=>{
+    const x=MLEFT+(cw/totalW)*RSPAN; cw+=WTS[i]; return x;
+  });
+  cumX.push(EX);
+  function yrToX(yr){
+    if(yr>=YRS[0]) return MLEFT;
+    if(yr<=YRS[YRS.length-1]) return EX;
+    let lo=0,hi=YRS.length-1;
+    while(lo<hi-1){const m=(lo+hi)>>1; if(YRS[m]>=yr)lo=m; else hi=m;}
+    const a=(YRS[lo]-yr)/(YRS[lo]-YRS[hi]);
+    return cumX[lo]+(cumX[hi]-cumX[lo])*a;
+  }
+  function xToYr(x){
+    if(x<=MLEFT) return YR_L;
+    if(x>=EX)    return YR_R;
+    let lo=0,hi=cumX.length-1;
+    while(lo<hi-1){const m=(lo+hi)>>1; if(cumX[m]<=x)lo=m; else hi=m;}
+    const a=(x-cumX[lo])/(cumX[lo+1]-cumX[lo]);
+    const y1=YRS[lo+1]!==undefined?YRS[lo+1]:YRS[lo]-1;
+    return YRS[lo]-a*(YRS[lo]-y1);
+  }
+  function pxPerYrAt(x){
+    const eps=0.25;
+    const x1=yrToX(Math.min(YR_L,xToYr(x)+eps));
+    const x2=yrToX(Math.max(YR_R,xToYr(x)-eps));
+    return Math.max(0.04,(x2-x1)/(2*eps));
+  }
+  const uniformPxPerYr=RSPAN/Math.max(1,YR_L-YR_R);
+  // ── BACKGROUND ──────────────────────────────────────────────
+  const defs=mk('defs');
+  const pat=mk('pattern',{id:'gr',width:'40',height:'40',patternUnits:'userSpaceOnUse'});
+  pat.appendChild(mk('path',{d:'M40 0L0 0 0 40',fill:'none',stroke:t.grid.replace(/[\d.]+\)$/,'1)'),'stroke-opacity':t.grid.match(/[\d.]+(?=\))/)?.[0]||'0.02','stroke-width':'0.5'}));
+  defs.appendChild(pat);
+  const clipId='ribClip';
+  const cp=mk('clipPath',{id:clipId});
+  cp.appendChild(mk('rect',{x:0,y:0,width:EX,height:H}));
+  defs.appendChild(cp);
+  svg.appendChild(defs);
+  svg.appendChild(mk('rect',{width:W,height:H,fill:t.bg}));
+  svg.appendChild(mk('rect',{width:W,height:H,fill:'url(#gr)'}));
+  // NGE scanlines overlay
+  if(NGE){
+    const sl=mk('pattern',{id:'sl',width:'1',height:'3',patternUnits:'userSpaceOnUse'});
+    sl.appendChild(mk('rect',{width:'1',height:'1',fill:'rgba(0,0,0,.18)'}));
+    defs.appendChild(sl);
+    svg.appendChild(mk('rect',{width:W,height:H,fill:'url(#sl)',opacity:'0.6'}));
+  }
+  // ── BIAS GUIDE ──────────────────────────────────────────────
+  if(BIAS>0 && BIAS_YR>YR_R && BIAS_YR<YR_L){
+    const bx=yrToX(BIAS_YR);
+    svg.appendChild(mk('line',{x1:bx,y1:H*.07,x2:bx,y2:H*.87,
+      stroke:t.bias.replace(/[\d.]+\)$/,'0.35)'),'stroke-width':'0.6','stroke-dasharray':'3,7'}));
+    svg.appendChild(tx(bx,H*.062,''+BIAS_YR,{'text-anchor':'middle',
+      'font-family':'IBM Plex Mono,monospace','font-size':'6.5','fill':t.bias.replace(/[\d.]+\)$/,'0.45)')}));
+  }
+  // ── AXIS ────────────────────────────────────────────────────
+  const AY=H*.10;
+  svg.appendChild(mk('line',{x1:MLEFT,y1:AY,x2:EX,y2:AY,stroke:t.axis,'stroke-width':'0.5'}));
+  [2026,2010,1990,1970,1950,1930,1918].forEach(yr=>{
+    if(yr<YR_R) return;
+    const x=yrToX(yr); if(x<MLEFT-2||x>EX+2) return;
+    const maj=yr===2026||yr===1918;
+    svg.appendChild(mk('line',{x1:x,y1:AY-3,x2:x,y2:AY+3,stroke:t.tick,'stroke-width':maj?'1':'0.5'}));
+    svg.appendChild(mk('line',{x1:x,y1:AY+3,x2:x,y2:H*.87,stroke:t.tick,'stroke-width':'0.3','stroke-opacity':'0.3','stroke-dasharray':'2,5'}));
+    svg.appendChild(tx(x,AY-7,''+yr,{'text-anchor':'middle','font-family':'IBM Plex Mono,monospace',
+      'font-size':'7.5','fill':t.tick,'opacity':maj?'0.9':'0.5','letter-spacing':'0.5'}));
+  });
+  [{yr:2020,k:'covid'},{yr:1943,k:'wwii'},{yr:1963,k:'leap'},{yr:1984,k:'famine'},{yr:1918,k:'flu'}]
+    .forEach(({yr,k})=>{
+      if(yr<YR_R) return;
+      const x=yrToX(yr); if(x<MLEFT||x>EX) return;
+      svg.appendChild(tx(x,AY+12,L[k],{'text-anchor':'middle',
+        'font-family':'IBM Plex Mono,monospace','font-size':'7.5','fill':t.ann,'letter-spacing':'0.5'}));
+    });
+  // ── SAMPLES ─────────────────────────────────────────────────
+  const N=2000;
+  const CONV_X=MLEFT+(EX-MLEFT)*CONV_FRAC;
+  // Taper: only in the final approach to the circle (last 12% of chart width)
+  // Y-convergence and thickness are now independent.
+  const TAPER_END = EX;
+  const TAPER_START = EX - R * 2.5;  // only last ~2.5 radii before circle
+  const smpl=[];
+  for(let s=0;s<=N;s++){
+    const x=MLEFT+(EX-MLEFT)*(s/N);
+    const yr=xToYr(x);
+    const dScale=uniformPxPerYr/pxPerYrAt(x);
+    // thickness taper: 1.0 until TAPER_START, then cos→0 at EX
+    const endTaper = x < TAPER_START ? 1.0 :
+      Math.max(0, Math.cos(((x-TAPER_START)/(TAPER_END-TAPER_START)) * Math.PI/2));
+    const hws=KEYS.map((_,ci)=>hwRaw(yr,ci)*dScale*endTaper);
+    smpl.push({x,yr,dScale,hws});
+  }
+  // Moving average smoothing
+  if(SMOOTH>0){
+    const W2=Math.round(SMOOTH);
+    const smoothed=smpl.map((_,si)=>{
+      const hw2=KEYS.map((_,ci)=>{
+        let sum=0,count=0;
+        for(let di=-W2;di<=W2;di++){
+          const j=si+di;
+          if(j>=0&&j<smpl.length){sum+=smpl[j].hws[ci];count++;}
+        }
+        return sum/count;
+      });
+      return hw2;
+    });
+    smpl.forEach((s,si)=>{s.hws=smoothed[si];});
+  }
+  function ribbonCY(ci,x){
+    const sCY=H*START_FRAC[ci];
+    if(x<=CONV_X) return sCY;
+    const tN=(x-CONV_X)/(EX-CONV_X);
+    const e=tN*tN*(3-2*tN);
+    return sCY+(PY-sCY)*e;
+  }
+  const ribG=mk('g',{opacity:'0.88','clip-path':`url(#${clipId})`});
+  svg.appendChild(ribG);
+  if(!STACKED){
+    COLORS.forEach((color,ci)=>{
+      const top=[],bot=[];
+      smpl.forEach(({x,hws})=>{
+        const cy=ribbonCY(ci,x);
+        const hw=hws[ci];
+        top.push([x,cy-hw]); bot.push([x,cy+hw]);
+      });
+      let d=`M${top[0][0].toFixed(2)},${top[0][1].toFixed(2)}`;
+      for(let i=1;i<top.length;i++) d+=` L${top[i][0].toFixed(2)},${top[i][1].toFixed(2)}`;
+      for(let i=bot.length-1;i>=0;i--) d+=` L${bot[i][0].toFixed(2)},${bot[i][1].toFixed(2)}`;
+      d+=' Z';
+      ribG.appendChild(mk('path',{d,fill:color,stroke:t.clear,'stroke-width':'0.4'}));
+    });
+  } else {
+    const order=[3,2,1,0];
+    order.forEach(ci=>{
+      const topPts=[],botPts=[];
+      smpl.forEach(({x,hws})=>{
+        let wSum=0,wCen=0;
+        KEYS.forEach((_,j)=>{
+          const cy=ribbonCY(j,x);
+          wSum+=hws[j]*2; wCen+=cy*hws[j]*2;
+        });
+        const cen=wSum>0?wCen/wSum:PY;
+        const half=hws.reduce((a,b)=>a+b,0);
+        let bot2=cen-half;
+        for(let k=order.length-1;k>=0;k--){
+          if(order[k]===ci) break;
+          bot2+=hws[order[k]]*2;
+        }
+        topPts.push([x,bot2+hws[ci]*2]);
+        botPts.push([x,bot2]);
+      });
+      let d=`M${botPts[0][0].toFixed(2)},${botPts[0][1].toFixed(2)}`;
+      for(let i=1;i<botPts.length;i++) d+=` L${botPts[i][0].toFixed(2)},${botPts[i][1].toFixed(2)}`;
+      for(let i=topPts.length-1;i>=0;i--) d+=` L${topPts[i][0].toFixed(2)},${topPts[i][1].toFixed(2)}`;
+      d+=' Z';
+      ribG.appendChild(mk('path',{d,fill:COLORS[ci],stroke:t.clear,'stroke-width':'0.3'}));
+    });
+  }
+  // ── ORIGIN LABELS ────────────────────────────────────────────
+  const names=[L.eu,L.as,L.af,L.am];
+  COLORS.forEach((color,ci)=>{
+    const sCY=H*START_FRAC[ci];
+    const label=names[ci].split(' ')[0];
+    svg.appendChild(tx(MLEFT-7,sCY+3,label,{'text-anchor':'end',
+      'font-family':'IBM Plex Mono,monospace','font-size':'7.5',fill:color,opacity:'0.7','letter-spacing':'0.5'}));
+  });
+  // ── POSTO ───────────────────────────────────────────────────
+  const R1=R,R2=Math.round(R*.65),R3=Math.round(R*.38);
+  // Background clear behind circle — hides any ribbon bleed
+  svg.appendChild(mk('circle',{cx:PX,cy:PY,r:R1+10,fill:t.clear}));
+  [R1,R2,R3].forEach((r,i)=>svg.appendChild(mk('circle',{cx:PX,cy:PY,r,fill:'none',
+    stroke:t.tick,'stroke-width':i===2?'0.85':'0.6','stroke-opacity':i===0?'0.5':'0.3'})));
+  for(let i=0;i<16;i++){
+    const ang=i*Math.PI*2/16,card=i%4===0,semi=i%2===0&&!card;
+    const len=card?7:semi?4:2.5,sw=card?1.2:0.55;
+    svg.appendChild(mk('line',{
+      x1:(PX+Math.cos(ang)*R1).toFixed(2),y1:(PY+Math.sin(ang)*R1).toFixed(2),
+      x2:(PX+Math.cos(ang)*(R1+len)).toFixed(2),y2:(PY+Math.sin(ang)*(R1+len)).toFixed(2),
+      stroke:t.tick,'stroke-width':sw,'stroke-opacity':card?'0.5':'0.15'}));
+  }
+  const DX=R3*.80,DY=R3*.70;
+  svg.appendChild(mk('path',{
+    d:`M${(PX-DX).toFixed(1)},${PY} L${(PX+DX*.5).toFixed(1)},${(PY-DY).toFixed(1)} L${(PX+DX*.5).toFixed(1)},${(PY+DY).toFixed(1)} Z`,
+    fill:'none',stroke:t.posto,'stroke-width':'1.0','stroke-linejoin':'miter'}));
+  svg.appendChild(mk('line',{x1:PX-R3+3,y1:PY,x2:PX-4,y2:PY,stroke:t.posto,'stroke-width':'0.7','stroke-opacity':'0.5'}));
+  svg.appendChild(mk('line',{x1:PX+4,y1:PY,x2:PX+R3-3,y2:PY,stroke:t.posto,'stroke-width':'0.7','stroke-opacity':'0.5'}));
+  svg.appendChild(mk('circle',{cx:PX,cy:PY,r:2.2,fill:t.posto}));
+  // ── EXIT ARROWS ──────────────────────────────────────────────
+  const CY_TOP=H*.04,CY_BOT=H*.96,LX=PX+R1+13;
+  svg.appendChild(mk('line',{x1:PX,y1:PY-R1,x2:PX,y2:CY_TOP+7,stroke:t.ceuA,'stroke-width':'1.1'}));
+  svg.appendChild(mk('polygon',{points:`${PX-4},${CY_TOP+8} ${PX},${CY_TOP} ${PX+4},${CY_TOP+8}`,fill:t.ceuA}));
+  svg.appendChild(tx(LX,CY_TOP+20,L.ceu,{'font-family':'Georgia,serif','font-style':'italic','font-size':'17','fill':t.ceu}));
+  svg.appendChild(tx(LX,CY_TOP+32,L.ceusub,{'font-family':'IBM Plex Mono,monospace','font-size':'5.5','fill':t.ceu,'opacity':'0.38','letter-spacing':'1'}));
+  svg.appendChild(mk('line',{x1:PX,y1:PY+R1,x2:PX,y2:CY_BOT-7,stroke:t.infA,'stroke-width':'1.1'}));
+  svg.appendChild(mk('polygon',{points:`${PX-4},${CY_BOT-8} ${PX},${CY_BOT} ${PX+4},${CY_BOT-8}`,fill:t.infA}));
+  svg.appendChild(tx(LX,CY_BOT-24,L.inf,{'font-family':'Georgia,serif','font-style':'italic','font-size':'17','fill':t.inf}));
+  svg.appendChild(tx(LX,CY_BOT-12,L.infsub,{'font-family':'IBM Plex Mono,monospace','font-size':'5.5','fill':t.inf,'opacity':'0.38','letter-spacing':'1'}));
+  svg.appendChild(tx(PX+R1+12,PY-5,L.posto,{'font-family':'IBM Plex Mono,monospace','font-size':'9.5','fill':t.posto,'letter-spacing':'2'}));
+  svg.appendChild(tx(PX+R1+12,PY+8,'ARBITER v1.0',{'font-family':'IBM Plex Mono,monospace','font-size':'6.5','fill':t.arb,'letter-spacing':'1.5'}));
+}
+// ── INIT ────────────────────────────────────────────────────────
+applyLang(); updateStats(); applyThemeColors();
+document.getElementById('cSl').addEventListener('input',function(){CONV_FRAC=this.value/100;document.getElementById('cVal').textContent=this.value+'%';render();});
+document.getElementById('pSl').addEventListener('input',function(){PROC_FRAC=this.value/100;document.getElementById('pVal').textContent=Math.round(PROC_FRAC*515)+'M';updateStats();render();});
+document.getElementById('bSl').addEventListener('input',function(){BIAS=this.value/100;document.getElementById('bVal').textContent=BIAS.toFixed(1)+'×';render();});
+document.getElementById('bySl').addEventListener('input',function(){BIAS_YR=+this.value;document.getElementById('byVal').textContent=this.value;render();});
+document.getElementById('smSl').addEventListener('input',function(){SMOOTH=+this.value;document.getElementById('smVal').textContent=this.value;render();});
+render();
+let _t; window.addEventListener('resize',()=>{clearTimeout(_t);_t=setTimeout(render,60);});
+</script>
+</body>
+</html>
