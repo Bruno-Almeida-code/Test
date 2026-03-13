@@ -284,7 +284,8 @@ function render(){
   const L=STR[LANG];
   const t=T();
   const COLORS=t.colors;
-  const MLEFT=148, R=Math.min(46,H*.09);
+  const fS=Math.max(0.8,H/700);
+  const MLEFT=Math.round(W*0.077), R=Math.min(46,H*.09);
   const PX=Math.round(W*.845), PY=H*.50, EX=PX-R;
   const YR_L=2026, YR_R=1917+Math.round(PROC_FRAC*109);
   const RSPAN=EX-MLEFT;
@@ -356,7 +357,7 @@ function render(){
     svg.appendChild(mk('line',{x1:bx,y1:H*.07,x2:bx,y2:H*.87,
       stroke:t.bias.replace(/[\d.]+\)$/,'0.35)'),'stroke-width':'0.6','stroke-dasharray':'3,7'}));
     svg.appendChild(tx(bx,H*.062,''+BIAS_YR,{'text-anchor':'middle',
-      'font-family':'IBM Plex Mono,monospace','font-size':'6.5','fill':t.bias.replace(/[\d.]+\)$/,'0.45)')}));
+      'font-family':'IBM Plex Mono,monospace','font-size':(6.5*fS).toFixed(1),'fill':t.bias.replace(/[\d.]+\)$/,'0.45)')}));
   }
   // ── AXIS ────────────────────────────────────────────────────
   const AY=H*.10;
@@ -367,33 +368,37 @@ function render(){
     const maj=yr===2026||yr===1918;
     svg.appendChild(mk('line',{x1:x,y1:AY-3,x2:x,y2:AY+3,stroke:t.tick,'stroke-width':maj?'1':'0.5'}));
     svg.appendChild(mk('line',{x1:x,y1:AY+3,x2:x,y2:H*.87,stroke:t.tick,'stroke-width':'0.3','stroke-opacity':'0.3','stroke-dasharray':'2,5'}));
-    svg.appendChild(tx(x,AY-7,''+yr,{'text-anchor':'middle','font-family':'IBM Plex Mono,monospace',
-      'font-size':'7.5','fill':t.tick,'opacity':maj?'0.9':'0.5','letter-spacing':'0.5'}));
+    svg.appendChild(tx(x,AY-7*fS,''+yr,{'text-anchor':'middle','font-family':'IBM Plex Mono,monospace',
+      'font-size':(7.5*fS).toFixed(1),'fill':t.tick,'opacity':maj?'0.9':'0.5','letter-spacing':'0.5'}));
   });
   [{yr:2020,k:'covid'},{yr:1943,k:'wwii'},{yr:1963,k:'leap'},{yr:1984,k:'famine'},{yr:1918,k:'flu'}]
     .forEach(({yr,k})=>{
       if(yr<YR_R) return;
       const x=yrToX(yr); if(x<MLEFT||x>EX) return;
-      svg.appendChild(tx(x,AY+12,L[k],{'text-anchor':'middle',
-        'font-family':'IBM Plex Mono,monospace','font-size':'7.5','fill':t.ann,'letter-spacing':'0.5'}));
+      svg.appendChild(tx(x,AY+12*fS,L[k],{'text-anchor':'middle',
+        'font-family':'IBM Plex Mono,monospace','font-size':(7.5*fS).toFixed(1),'fill':t.ann,'letter-spacing':'0.5'}));
     });
   // ── SAMPLES ─────────────────────────────────────────────────
   const N=2000;
   const CONV_X=MLEFT+(EX-MLEFT)*CONV_FRAC;
-  // Taper synchronized with convergence: endTaper = 1-e prevents ribbon overlap.
+  // Tapers are stored raw and applied AFTER smoothing to preserve boundary conditions.
   const smpl=[];
   for(let s=0;s<=N;s++){
     const x=MLEFT+(EX-MLEFT)*(s/N);
     const yr=xToYr(x);
     const dScale=uniformPxPerYr/pxPerYrAt(x);
-    // Use same smoothstep as ribbonCY: width shrinks in lockstep with convergence.
+    // Right taper: ribbons converge to 0 width at EX (smoothstep, synced with ribbonCY).
     const tN = x <= CONV_X ? 0 : Math.min(1,(x-CONV_X)/(EX-CONV_X));
     const e_t = tN*tN*(3-2*tN);
     const endTaper = Math.max(0, 1-e_t);
-    const hws=KEYS.map((_,ci)=>hwRaw(yr,ci)*dScale*endTaper);
-    smpl.push({x,yr,dScale,hws});
+    // Left taper: ribbons start from 0 width at MLEFT, reach full width over first 2.5%.
+    const sN = Math.min(1,(x-MLEFT)/((EX-MLEFT)*0.025));
+    const e_s = sN*sN*(3-2*sN);
+    const startTaper = e_s;
+    const hwsRaw=KEYS.map((_,ci)=>hwRaw(yr,ci)*dScale);
+    smpl.push({x,yr,dScale,hwsRaw,endTaper,startTaper});
   }
-  // Moving average smoothing
+  // Moving average smoothing operates on raw values (before taper).
   if(SMOOTH>0){
     const W2=Math.round(SMOOTH);
     const smoothed=smpl.map((_,si)=>{
@@ -401,14 +406,18 @@ function render(){
         let sum=0,count=0;
         for(let di=-W2;di<=W2;di++){
           const j=si+di;
-          if(j>=0&&j<smpl.length){sum+=smpl[j].hws[ci];count++;}
+          if(j>=0&&j<smpl.length){sum+=smpl[j].hwsRaw[ci];count++;}
         }
         return sum/count;
       });
       return hw2;
     });
-    smpl.forEach((s,si)=>{s.hws=smoothed[si];});
+    smpl.forEach((s,si)=>{s.hwsRaw=smoothed[si];});
   }
+  // Apply tapers after smoothing so boundary conditions are preserved.
+  smpl.forEach(s=>{
+    s.hws=s.hwsRaw.map(hw=>hw*s.endTaper*s.startTaper);
+  });
   function ribbonCY(ci,x){
     const sCY=H*START_FRAC[ci];
     if(x<=CONV_X) return sCY;
@@ -464,8 +473,8 @@ function render(){
   COLORS.forEach((color,ci)=>{
     const sCY=H*START_FRAC[ci];
     const label=names[ci].split(' ')[0];
-    svg.appendChild(tx(MLEFT-7,sCY+3,label,{'text-anchor':'end',
-      'font-family':'IBM Plex Mono,monospace','font-size':'7.5',fill:color,opacity:'0.7','letter-spacing':'0.5'}));
+    svg.appendChild(tx(MLEFT-7*fS,sCY+3*fS,label,{'text-anchor':'end',
+      'font-family':'IBM Plex Mono,monospace','font-size':(7.5*fS).toFixed(1),fill:color,opacity:'0.7','letter-spacing':'0.5'}));
   });
   // ── POSTO ───────────────────────────────────────────────────
   const R1=R,R2=Math.round(R*.65),R3=Math.round(R*.38);
@@ -489,17 +498,17 @@ function render(){
   svg.appendChild(mk('line',{x1:PX+4,y1:PY,x2:PX+R3-3,y2:PY,stroke:t.posto,'stroke-width':'0.7','stroke-opacity':'0.5'}));
   svg.appendChild(mk('circle',{cx:PX,cy:PY,r:2.2,fill:t.posto}));
   // ── EXIT ARROWS ──────────────────────────────────────────────
-  const CY_TOP=H*.04,CY_BOT=H*.96,LX=PX+R1+13;
+  const CY_TOP=H*.04,CY_BOT=H*.96,LX=PX+R1+13*fS;
   svg.appendChild(mk('line',{x1:PX,y1:PY-R1,x2:PX,y2:CY_TOP+7,stroke:t.ceuA,'stroke-width':'1.1'}));
   svg.appendChild(mk('polygon',{points:`${PX-4},${CY_TOP+8} ${PX},${CY_TOP} ${PX+4},${CY_TOP+8}`,fill:t.ceuA}));
-  svg.appendChild(tx(LX,CY_TOP+20,L.ceu,{'font-family':'Georgia,serif','font-style':'italic','font-size':'17','fill':t.ceu}));
-  svg.appendChild(tx(LX,CY_TOP+32,L.ceusub,{'font-family':'IBM Plex Mono,monospace','font-size':'5.5','fill':t.ceu,'opacity':'0.38','letter-spacing':'1'}));
+  svg.appendChild(tx(LX,CY_TOP+20*fS,L.ceu,{'font-family':'Georgia,serif','font-style':'italic','font-size':(17*fS).toFixed(1),'fill':t.ceu}));
+  svg.appendChild(tx(LX,CY_TOP+32*fS,L.ceusub,{'font-family':'IBM Plex Mono,monospace','font-size':(5.5*fS).toFixed(1),'fill':t.ceu,'opacity':'0.38','letter-spacing':'1'}));
   svg.appendChild(mk('line',{x1:PX,y1:PY+R1,x2:PX,y2:CY_BOT-7,stroke:t.infA,'stroke-width':'1.1'}));
   svg.appendChild(mk('polygon',{points:`${PX-4},${CY_BOT-8} ${PX},${CY_BOT} ${PX+4},${CY_BOT-8}`,fill:t.infA}));
-  svg.appendChild(tx(LX,CY_BOT-24,L.inf,{'font-family':'Georgia,serif','font-style':'italic','font-size':'17','fill':t.inf}));
-  svg.appendChild(tx(LX,CY_BOT-12,L.infsub,{'font-family':'IBM Plex Mono,monospace','font-size':'5.5','fill':t.inf,'opacity':'0.38','letter-spacing':'1'}));
-  svg.appendChild(tx(PX+R1+12,PY-5,L.posto,{'font-family':'IBM Plex Mono,monospace','font-size':'9.5','fill':t.posto,'letter-spacing':'2'}));
-  svg.appendChild(tx(PX+R1+12,PY+8,'ARBITER v1.0',{'font-family':'IBM Plex Mono,monospace','font-size':'6.5','fill':t.arb,'letter-spacing':'1.5'}));
+  svg.appendChild(tx(LX,CY_BOT-24*fS,L.inf,{'font-family':'Georgia,serif','font-style':'italic','font-size':(17*fS).toFixed(1),'fill':t.inf}));
+  svg.appendChild(tx(LX,CY_BOT-12*fS,L.infsub,{'font-family':'IBM Plex Mono,monospace','font-size':(5.5*fS).toFixed(1),'fill':t.inf,'opacity':'0.38','letter-spacing':'1'}));
+  svg.appendChild(tx(PX+R1+12*fS,PY-5*fS,L.posto,{'font-family':'IBM Plex Mono,monospace','font-size':(9.5*fS).toFixed(1),'fill':t.posto,'letter-spacing':'2'}));
+  svg.appendChild(tx(PX+R1+12*fS,PY+8*fS,'ARBITER v1.0',{'font-family':'IBM Plex Mono,monospace','font-size':(6.5*fS).toFixed(1),'fill':t.arb,'letter-spacing':'1.5'}));
 }
 // ── INIT ────────────────────────────────────────────────────────
 applyLang(); updateStats(); applyThemeColors();
