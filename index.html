@@ -103,7 +103,7 @@ body.nge #cSl{accent-color:#4CFF6A}body.nge #pSl{accent-color:#FF4400}body.nge #
   </div>
 </div>
 <div class="controls">
-  <div class="ctrl"><span id="s-conv"></span><input type="range" id="cSl" min="0" max="95" value="50"><span class="cv" id="cVal">50%</span></div>
+  <div class="ctrl"><span id="s-conv"></span><input type="range" id="cSl" min="0" max="95" value="0"><span class="cv" id="cVal">0%</span></div>
   <div class="cdiv"></div>
   <div class="ctrl"><span id="s-processed"></span><input type="range" id="pSl" min="0" max="100" value="0"><span class="cv" id="pVal">0M</span></div>
   <div class="cdiv"></div>
@@ -119,7 +119,7 @@ body.nge #cSl{accent-color:#4CFF6A}body.nge #pSl{accent-color:#FF4400}body.nge #
 </div>
 <script>
 // ── STATE ───────────────────────────────────────────────────────
-let CONV_FRAC = 0.50;
+let CONV_FRAC = 0.00;
 let PROC_FRAC = 0.00;
 let BIAS      = 0.00;
 let BIAS_YR   = 1980;
@@ -380,7 +380,7 @@ function render(){
     });
   // ── SAMPLES ─────────────────────────────────────────────────
   const N=2000;
-  const CONV_X=MLEFT+(EX-MLEFT)*CONV_FRAC;
+  const CONV_X=PX-CONV_FRAC*(PX-MLEFT);
   // Tapers are stored raw and applied AFTER smoothing to preserve boundary conditions.
   const smpl=[];
   for(let s=0;s<=N;s++){
@@ -388,7 +388,7 @@ function render(){
     const yr=xToYr(x);
     const dScale=uniformPxPerYr/pxPerYrAt(x);
     // Right taper: ribbons converge to 0 width at EX (smoothstep, synced with ribbonCY).
-    const tN = x <= CONV_X ? 0 : Math.min(1,(x-CONV_X)/(EX-CONV_X));
+    const tN = x <= CONV_X ? 0 : Math.min(1,(x-CONV_X)/Math.max(1,PX-CONV_X));
     const e_t = tN*tN*(3-2*tN);
     const endTaper = Math.max(0, 1-e_t);
     // Left taper removed — natural 2026 width is thin enough; no artificial taper needed.
@@ -418,7 +418,7 @@ function render(){
   function ribbonCY(ci,x){
     const sCY=H*START_FRAC[ci];
     if(x<=CONV_X) return sCY;
-    const tN=(x-CONV_X)/(EX-CONV_X);
+    const tN=Math.min(1,(x-CONV_X)/Math.max(1,PX-CONV_X));
     const e=tN*tN*(3-2*tN);
     return sCY+(PY-sCY)*e;
   }
