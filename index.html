@@ -286,7 +286,7 @@ function render(){
   const COLORS=t.colors;
   const fS=Math.max(0.8,H/700);
   const MLEFT=Math.round(W*0.077), R=Math.min(46,H*.09);
-  const PX=Math.round(W*.845), PY=H*.50, EX=PX-R;
+  const PX=Math.round(W*.845), PY=H*.50, EX=PX+R;
   const YR_L=2026, YR_R=1917+Math.round(PROC_FRAC*109);
   const RSPAN=EX-MLEFT;
   // ── DENSITY AXIS ────────────────────────────────────────────
@@ -339,7 +339,7 @@ function render(){
   defs.appendChild(pat);
   const clipId='ribClip';
   const cp=mk('clipPath',{id:clipId});
-  cp.appendChild(mk('rect',{x:0,y:0,width:EX,height:H}));
+  cp.appendChild(mk('rect',{x:0,y:0,width:PX,height:H}));
   defs.appendChild(cp);
   svg.appendChild(defs);
   svg.appendChild(mk('rect',{width:W,height:H,fill:t.bg}));
@@ -364,7 +364,7 @@ function render(){
   svg.appendChild(mk('line',{x1:MLEFT,y1:AY,x2:EX,y2:AY,stroke:t.axis,'stroke-width':'0.5'}));
   [2026,2010,1990,1970,1950,1930,1918].forEach(yr=>{
     if(yr<YR_R) return;
-    const x=yrToX(yr); if(x<MLEFT-2||x>EX+2) return;
+    const x=yrToX(yr); if(x<MLEFT-2||x>PX) return;
     const maj=yr===2026||yr===1918;
     svg.appendChild(mk('line',{x1:x,y1:AY-3,x2:x,y2:AY+3,stroke:t.tick,'stroke-width':maj?'1':'0.5'}));
     svg.appendChild(mk('line',{x1:x,y1:AY+3,x2:x,y2:H*.87,stroke:t.tick,'stroke-width':'0.3','stroke-opacity':'0.3','stroke-dasharray':'2,5'}));
@@ -374,7 +374,7 @@ function render(){
   [{yr:2020,k:'covid'},{yr:1943,k:'wwii'},{yr:1963,k:'leap'},{yr:1984,k:'famine'},{yr:1918,k:'flu'}]
     .forEach(({yr,k})=>{
       if(yr<YR_R) return;
-      const x=yrToX(yr); if(x<MLEFT||x>EX) return;
+      const x=yrToX(yr); if(x<MLEFT||x>PX) return;
       svg.appendChild(tx(x,AY+12*fS,L[k],{'text-anchor':'middle',
         'font-family':'IBM Plex Mono,monospace','font-size':(7.5*fS).toFixed(1),'fill':t.ann,'letter-spacing':'0.5'}));
     });
