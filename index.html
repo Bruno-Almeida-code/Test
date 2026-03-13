@@ -383,7 +383,7 @@ function render(){
   // Taper: only in the final approach to the circle (last 12% of chart width)
   // Y-convergence and thickness are now independent.
   const TAPER_END = EX;
-  const TAPER_START = EX - R * 2.5;  // only last ~2.5 radii before circle
+  const TAPER_START = CONV_X;  // taper starts where convergence starts
   const smpl=[];
   for(let s=0;s<=N;s++){
     const x=MLEFT+(EX-MLEFT)*(s/N);
