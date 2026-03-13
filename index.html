@@ -391,12 +391,9 @@ function render(){
     const tN = x <= CONV_X ? 0 : Math.min(1,(x-CONV_X)/(EX-CONV_X));
     const e_t = tN*tN*(3-2*tN);
     const endTaper = Math.max(0, 1-e_t);
-    // Left taper: ribbons start from 0 width at MLEFT, reach full width over first 2.5%.
-    const sN = Math.min(1,(x-MLEFT)/((EX-MLEFT)*0.025));
-    const e_s = sN*sN*(3-2*sN);
-    const startTaper = e_s;
+    // Left taper removed — natural 2026 width is thin enough; no artificial taper needed.
     const hwsRaw=KEYS.map((_,ci)=>hwRaw(yr,ci)*dScale);
-    smpl.push({x,yr,dScale,hwsRaw,endTaper,startTaper});
+    smpl.push({x,yr,dScale,hwsRaw,endTaper});
   }
   // Moving average smoothing operates on raw values (before taper).
   if(SMOOTH>0){
@@ -414,9 +411,9 @@ function render(){
     });
     smpl.forEach((s,si)=>{s.hwsRaw=smoothed[si];});
   }
-  // Apply tapers after smoothing so boundary conditions are preserved.
+  // Apply taper after smoothing so boundary condition (hw=0 at EX) is preserved.
   smpl.forEach(s=>{
-    s.hws=s.hwsRaw.map(hw=>hw*s.endTaper*s.startTaper);
+    s.hws=s.hwsRaw.map(hw=>hw*s.endTaper);
   });
   function ribbonCY(ci,x){
     const sCY=H*START_FRAC[ci];
@@ -430,10 +427,18 @@ function render(){
   if(!STACKED){
     COLORS.forEach((color,ci)=>{
       const top=[],bot=[];
+      const sCY=H*START_FRAC[ci];
       smpl.forEach(({x,hws})=>{
         const cy=ribbonCY(ci,x);
         const hw=hws[ci];
-        top.push([x,cy-hw]); bot.push([x,cy+hw]);
+        // Clamp ribbon bounds to their side of PY in the convergence zone so
+        // ribbons above/below PY never cross each other (eliminates the diamond).
+        let topY=cy-hw, botY=cy+hw;
+        if(x>CONV_X){
+          if(sCY<PY) botY=Math.min(botY,PY);
+          else       topY=Math.max(topY,PY);
+        }
+        top.push([x,topY]); bot.push([x,botY]);
       });
       let d=`M${top[0][0].toFixed(2)},${top[0][1].toFixed(2)}`;
       for(let i=1;i<top.length;i++) d+=` L${top[i][0].toFixed(2)},${top[i][1].toFixed(2)}`;
