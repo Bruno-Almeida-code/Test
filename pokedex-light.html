@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Pokédex Poster + Pokémon Cards Builder</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Poppins:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
 <style>
 
 /* ╔══════════════════════════════════╗
@@ -23,7 +23,7 @@
   --accent-border: rgba(17,17,17,0.18);
   --shadow: 0 1px 4px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.04);
   --radius: 10px;
-  --zoom: .55;
+  --zoom: .35;
 
   /* A4 page at 300 dpi */
   --page-w: 2480px;
@@ -83,7 +83,7 @@
    ╚══════════════════════════════════╝ */
 *{ box-sizing: border-box; margin: 0; }
 body{
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -107,16 +107,16 @@ body{
   gap: 6px;
 }
 .sidebar-header{
-  padding: 4px 0 12px;
+  padding: 8px 0 14px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 6px;
+  display: flex;
+  align-items: center;
 }
-.sidebar-header h1{
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -.3px;
-  color: var(--text);
+.pokemon-logo-svg{
+  height: 46px;
+  width: auto;
+  display: block;
 }
 
 .stage-wrap{ flex: 1; overflow: auto; padding: 32px; background: var(--panel2); }
@@ -143,7 +143,7 @@ body{
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font: 500 12px/1 'Inter', sans-serif;
+  font: 500 12px/1 'Poppins', sans-serif;
   transition: all .15s;
   letter-spacing: .1px;
 }
@@ -160,42 +160,56 @@ body{
    ╚══════════════════════════════════╝ */
 details.section{
   border: 1px solid var(--border);
+  border-left: 3px solid transparent;
   border-radius: var(--radius);
   background: var(--panel);
   overflow: hidden;
-  transition: background .15s;
+  transition: border-color .2s, background .15s;
 }
-details.section[open]{ background: var(--panel); }
-details.section + details.section{ margin-top: 3px; }
+details.section[open]{
+  background: var(--panel);
+  border-left-color: var(--accent);
+}
+details.section + details.section{ margin-top: 4px; }
 
 summary{
-  padding: 10px 12px;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: .3px;
-  color: var(--text);
+  padding: 11px 14px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--muted);
   cursor: pointer;
   list-style: none;
   display: flex;
   align-items: center;
   gap: 8px;
   user-select: none;
+  transition: color .15s;
 }
 summary::-webkit-details-marker{ display: none; }
-summary::before{
+summary .s-icon{
+  font-size: 13px;
+  flex-shrink: 0;
+  opacity: .75;
+}
+summary::after{
   content: '';
-  width: 5px; height: 5px;
+  margin-left: auto;
+  width: 6px; height: 6px;
   border-right: 1.5px solid var(--muted);
   border-bottom: 1.5px solid var(--muted);
   transform: rotate(-45deg);
-  transition: transform .15s;
+  transition: transform .2s;
   flex-shrink: 0;
 }
-details[open] > summary::before{ transform: rotate(45deg); }
-summary:hover{ color: var(--accent); }
+details[open] > summary::after{ transform: rotate(45deg); }
+details.section[open] > summary{ color: var(--text); }
+summary:hover{ color: var(--text); }
 
-.section-body{ padding: 4px 12px 12px; }
+.section-body{ padding: 2px 12px 14px; }
+.section-body .row:first-child{ margin-top: 0; }
 
 
 /* ╔══════════════════════════════════╗
@@ -212,11 +226,11 @@ label{
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font: 500 11px/1.3 'Inter', sans-serif;
+  font: 500 11px/1.3 'Poppins', sans-serif;
   color: var(--muted);
 }
 input[type="number"], input[type="text"], select, textarea{
-  font: 400 13px/1.3 'Inter', sans-serif;
+  font: 400 13px/1.3 'Poppins', sans-serif;
   border-radius: 7px;
   border: 1px solid var(--border);
   background: var(--panel);
@@ -302,8 +316,6 @@ input[type="range"]{
 /* ╔══════════════════════════════════╗
    ║  8. BUTTONS & ACTIONS            ║
    ╚══════════════════════════════════╝ */
-.actions{ display: flex; gap: 6px; padding: 8px 0; }
-
 .btn{
   height: 34px;
   padding: 0 14px;
@@ -312,12 +324,12 @@ input[type="range"]{
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
-  font: 500 12px/1 'Inter', sans-serif;
+  font: 500 11px/1 'Poppins', sans-serif;
   transition: all .15s;
   display: flex;
   align-items: center;
   gap: 6px;
-  letter-spacing: .1px;
+  letter-spacing: .2px;
 }
 .btn:hover{ background: var(--panel2); border-color: #ccc; }
 .btn:active{ transform: scale(0.97); }
@@ -329,7 +341,14 @@ input[type="range"]{
 }
 .btn.primary:hover{ background: #333; border-color: #333; }
 
-small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; margin: 4px 0; }
+small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; margin: 4px 0; }
+
+.actions-footer{
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.actions{ display: flex; gap: 6px; padding: 4px 0 8px; }
 
 
 /* ╔══════════════════════════════════╗
@@ -342,7 +361,7 @@ small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; m
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
-  font: 500 12px/1 'Inter', sans-serif;
+  font: 500 12px/1 'Poppins', sans-serif;
   color: var(--text);
   z-index: 999;
   display: none;
@@ -775,7 +794,18 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
     <div class="sidebar-header">
-      <h1>Pokédex Builder</h1>
+      <!-- Pokémon wordmark SVG logo -->
+      <svg class="pokemon-logo-svg" viewBox="0 0 260 52" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pokémon">
+        <text y="43" x="2"
+          font-family="'Lilita One', cursive"
+          font-size="46"
+          fill="#FFCB05"
+          stroke="#2B5FA7"
+          stroke-width="4"
+          stroke-linejoin="round"
+          paint-order="stroke fill"
+          letter-spacing="-1">POKÉMON</text>
+      </svg>
     </div>
 
     <div class="tabs">
@@ -785,7 +815,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ DATASET & LOOK ══════ -->
     <details class="section" open>
-      <summary>Dataset & Look</summary>
+      <summary><span class="s-icon">🗂</span>Dataset & Look</summary>
       <div class="section-body">
         <div class="row">
           <label>Generation
@@ -827,7 +857,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
         </div>
         <div class="row">
           <label style="width:100%">UI Zoom
-            <input id="zoom" type="range" min="0.35" max="1" step="0.01" value=".55">
+            <input id="zoom" type="range" min="0.35" max="1" step="0.01" value="0.35">
           </label>
         </div>
         <div class="row">
@@ -861,7 +891,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ POSTER SETTINGS ══════ -->
     <details class="section" id="posterPanel">
-      <summary>Poster Settings</summary>
+      <summary><span class="s-icon">🖼</span>Poster Settings</summary>
       <div class="section-body">
         <div class="row">
           <label>Mode
@@ -932,7 +962,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ CARDS: GRID ══════ -->
     <details class="section" id="cardsPanel" open>
-      <summary>Cards Grid (3×3)</summary>
+      <summary><span class="s-icon">⊞</span>Cards Grid</summary>
       <div class="section-body">
         <input id="cardCols" type="hidden" value="3">
         <input id="cardRows" type="hidden" value="3">
@@ -945,7 +975,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ CARDS: PAGING ══════ -->
     <details class="section" id="pagingPanel">
-      <summary>Paging</summary>
+      <summary><span class="s-icon">◫</span>Paging</summary>
       <div class="section-body">
         <div class="row">
           <label>Mode
@@ -965,7 +995,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ CARDS: LAYOUT ══════ -->
     <details class="section" id="layoutPanel">
-      <summary>Card Layout</summary>
+      <summary><span class="s-icon">✦</span>Card Layout</summary>
       <div class="section-body">
         <div class="row">
           <label>Card padding <input id="cardPad" type="number" value="40" min="0" max="120"></label>
@@ -993,7 +1023,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ CARDS: TYPOGRAPHY ══════ -->
     <details class="section" id="typoPanel">
-      <summary>Typography</summary>
+      <summary><span class="s-icon">Aa</span>Typography</summary>
       <div class="section-body">
         <div class="row">
           <label>Text mode
@@ -1021,12 +1051,14 @@ body[data-exporting="1"] .stage{ transform: none !important; }
     </details>
 
     <!-- ══════ ACTION BUTTONS ══════ -->
-    <div class="actions">
-      <button class="btn" id="buildBtn">Build</button>
-      <button class="btn primary" id="printBtn">Print / PDF</button>
-      <button class="btn" id="downloadBtn">Download PNG</button>
+    <div class="actions-footer">
+      <div class="actions">
+        <button class="btn primary" id="buildBtn">▶ Build</button>
+        <button class="btn" id="printBtn">⎙ Print / PDF</button>
+        <button class="btn" id="downloadBtn">↓ PNG</button>
+      </div>
+      <small>Use the print dialog to select specific pages after building.</small>
     </div>
-    <small>After building, use the print dialog to select specific pages.</small>
 
   </aside>
 
