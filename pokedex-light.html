@@ -127,25 +127,17 @@ body{
 
 .stage-wrap{
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   background: var(--panel2);
+  padding: 32px;
 }
-.stage-toolbar{
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 7px 14px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-}
-.zoom-ctrl{
+.zoom-bar{
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
 }
 .zoom-step{
   width: 26px; height: 26px;
@@ -160,11 +152,11 @@ body{
   flex-shrink: 0;
 }
 .zoom-step:hover{ background: var(--panel2); }
-#zoom{ width: 90px; accent-color: var(--accent); cursor: pointer; }
+#zoom{ flex: 1; accent-color: var(--accent); cursor: pointer; min-width: 0; }
 #zoomVal{
   font: 500 11px/1 'Poppins', sans-serif;
   color: var(--muted);
-  min-width: 34px;
+  min-width: 32px;
   text-align: center;
 }
 .stage-scroll{ flex: 1; overflow: auto; padding: 32px; }
@@ -821,9 +813,7 @@ body[data-exporting="1"] .page{
   }
   .sidebar, .loading{ display: none !important; }
   .app{ display: block; background: #fff !important; }
-  .stage-wrap{ display: block; background: #fff !important; overflow: hidden; }
-  .stage-toolbar{ display: none !important; }
-  .stage-scroll{ padding: 0 !important; overflow: hidden; }
+  .stage-wrap{ display: block; background: #fff !important; overflow: hidden; padding: 0 !important; }
   .stage{ transform: none !important; }
   #root{ gap: 0 !important; }
   .page{
@@ -862,6 +852,15 @@ body[data-exporting="1"] .page{
     <div class="tabs">
       <button class="tab active" data-mode="poster">Poster</button>
       <button class="tab" data-mode="cards">Cards</button>
+    </div>
+
+    <!-- ══════ ZOOM BAR ══════ -->
+    <div class="zoom-bar">
+      <button class="zoom-step" id="zoomOut" title="Zoom out">−</button>
+      <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
+      <span id="zoomVal">35%</span>
+      <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
+      <button class="zoom-step" id="zoomFit" title="Fit to window" style="width:auto;padding:0 8px;font-size:11px">↔ Fit</button>
     </div>
 
     <!-- ══════ ACTION BUTTONS ══════ -->
@@ -1107,19 +1106,8 @@ body[data-exporting="1"] .page{
 
   <!-- ══════ STAGE (preview area) ══════ -->
   <main class="stage-wrap">
-    <div class="stage-toolbar">
-      <div class="zoom-ctrl">
-        <button class="zoom-step" id="zoomOut" title="Zoom out">−</button>
-        <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
-        <span id="zoomVal">35%</span>
-        <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
-      </div>
-      <button class="zoom-step" id="zoomFit" title="Fit to window">↔ Fit</button>
-    </div>
-    <div class="stage-scroll">
-      <div class="stage">
-        <div id="root"></div>
-      </div>
+    <div class="stage">
+      <div id="root"></div>
     </div>
   </main>
 </div>
@@ -1431,6 +1419,31 @@ async function evoLine(url){
 async function preloadImages(root){
   const imgs = [...root.querySelectorAll('img')];
   await Promise.all(imgs.map(i => i.decode().catch(()=>{})));
+}
+// Replace pixel <img> elements with nearest-neighbour <canvas> so html2canvas
+// (which ignores image-rendering:pixelated) produces crisp pixel art.
+// Returns a restore function that swaps the canvases back to imgs.
+async function sharpPixelImages(root){
+  const imgs = [...root.querySelectorAll('img.pixel')];
+  const swaps = [];
+  for(const img of imgs){
+    try{ await img.decode(); }catch{}
+    const w = img.offsetWidth, h = img.offsetHeight;
+    if(!w || !h || !img.complete || !img.naturalWidth) continue;
+    const cnv = document.createElement('canvas');
+    cnv.width = w; cnv.height = h;
+    // Match the computed display/size so layout is unaffected
+    const cs = getComputedStyle(img);
+    cnv.style.display = cs.display;
+    cnv.style.width  = cs.width;
+    cnv.style.height = cs.height;
+    const ctx = cnv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, w, h);
+    img.parentNode.replaceChild(cnv, img);
+    swaps.push({ cnv, img });
+  }
+  return () => swaps.forEach(({ cnv, img }) => cnv.parentNode?.replaceChild(img, cnv));
 }
 async function readyFonts(){ try{ await document.fonts.ready; }catch{} }
 
@@ -2127,8 +2140,10 @@ el('downloadBtn').addEventListener('click', async () => {
   catch(e){ alert(e.message); return; }
   document.body.dataset.exporting = '1';
   showLoading();
+  let restorePixel = () => {};
   try {
     await preloadImages(page);
+    restorePixel = await sharpPixelImages(page);
     const canvas = await html2canvas(page, {
       scale: 1,
       useCORS: true,
@@ -2151,6 +2166,7 @@ el('downloadBtn').addEventListener('click', async () => {
   } catch(err) {
     alert('PNG export failed: ' + err.message);
   } finally {
+    restorePixel();
     document.body.removeAttribute('data-exporting');
     hideLoading();
   }
@@ -2172,10 +2188,10 @@ function applyZoom(z){
   setVar('--zoom', rounded);
 }
 function fitZoom(){
-  const scroll = document.querySelector('.stage-scroll');
-  if(!scroll) return;
+  const wrap = document.querySelector('.stage-wrap');
+  if(!wrap) return;
   const pageW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) || 2480;
-  applyZoom((scroll.clientWidth - 64) / pageW);
+  applyZoom((wrap.clientWidth - 64) / pageW);
 }
 
 // Zoom slider
