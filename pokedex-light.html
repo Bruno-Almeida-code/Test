@@ -1120,8 +1120,29 @@ body[data-exporting="1"] .stage{ transform: none !important; }
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+
+// ╔══════════════════════════════════╗
+// ║  0. LAZY DEPS                    ║
+// ╚══════════════════════════════════╝
+async function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+async function ensureHtml2Canvas(){
+  if(typeof html2canvas !== 'undefined') return;
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+    'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js',
+  ];
+  for(const src of cdns){
+    try{ await loadScript(src); if(typeof html2canvas !== 'undefined') return; }catch{}
+  }
+  throw new Error('html2canvas could not be loaded from any CDN. Check your internet connection.');
+}
 
 // ╔══════════════════════════════════╗
 // ║  1. UTILITIES                    ║
@@ -1496,9 +1517,16 @@ function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true, overlapX=
   const W = 2480 - 2*pad;
   const H = 3508 - 2*pad - titleH;
   const captionH = showCaption ? capPx + 4 : 0;
-  let bestSize = 0, bestCols = 1, bestRows = n;
-  for(let cols = 1; cols <= n; cols++){
-    const rows = Math.ceil(n / cols);
+  // Minimum sprite size per style — used to bound rows/cols so degenerate
+  // 1×N layouts never win when a dense page-filling grid fits better.
+  const minSprite = style === 'pixel' ? 96 : 16;
+  const maxCols = Math.max(1, Math.floor((W + overlapX) / minSprite));
+  const maxRows = Math.max(1, Math.floor((H - captionH + overlapY) / minSprite));
+  let bestSize = 0, bestItems = 0;
+  let bestCols = Math.min(n, maxCols), bestRows = Math.min(n, maxRows);
+  for(let cols = 1; cols <= Math.min(n, maxCols); cols++){
+    // Cap rows to the page-height maximum — prevents 1×1010 degenerate layout
+    const rows = Math.min(Math.ceil(n / cols), maxRows);
     const cellW = W / cols;
     const cellH = H / rows;
     const avail = Math.min(cellW + overlapX, cellH - captionH + overlapY);
@@ -1506,7 +1534,11 @@ function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true, overlapX=
     const size = (style === 'pixel')
       ? 96 * Math.max(1, Math.floor(avail / 96))
       : Math.floor(avail);
-    if(size > bestSize){ bestSize = size; bestCols = cols; bestRows = rows; }
+    const items = cols * rows;
+    // Primary sort: larger sprites. Tie-break: more items per page (denser grid).
+    if(size > bestSize || (size === bestSize && items > bestItems)){
+      bestSize = size; bestItems = items; bestCols = cols; bestRows = rows;
+    }
   }
   return { cols: bestCols, rows: bestRows };
 }
@@ -2087,6 +2119,8 @@ el('downloadBtn').addEventListener('click', async () => {
   await readyFonts();
   const page = document.querySelector('.page');
   if(!page){ alert('Build first, then export.'); return; }
+  try{ await ensureHtml2Canvas(); }
+  catch(e){ alert(e.message); return; }
   document.body.dataset.exporting = '1';
   showLoading();
   try {
