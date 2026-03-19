@@ -657,8 +657,8 @@ img.poke.pixel{
   width: calc(var(--mini) * var(--evo-box-scale));
   height: calc(var(--mini) * var(--evo-box-scale));
   border-radius: 14px;
-  background: color-mix(in srgb, var(--evo-box-bg) calc(var(--evo-box-on) * 100%), transparent);
-  border: 1px solid color-mix(in srgb, var(--evo-box-border) calc(var(--evo-box-on) * 100%), transparent);
+  background: var(--evo-box-bg);
+  border: 1px solid var(--evo-box-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2140,17 +2140,46 @@ el('downloadBtn').addEventListener('click', async () => {
   catch(e){ alert(e.message); return; }
   document.body.dataset.exporting = '1';
   showLoading();
-  let restorePixel = () => {};
   try {
     await preloadImages(page);
-    restorePixel = await sharpPixelImages(page);
+    // Annotate pixel/mini imgs with their live dimensions before html2canvas clones the DOM
+    for(const img of page.querySelectorAll('img.pixel, img.mini')){
+      try{ await img.decode(); }catch{}
+      img.dataset.capW = img.offsetWidth;
+      img.dataset.capH = img.offsetHeight;
+    }
     const canvas = await html2canvas(page, {
       scale: 1,
       useCORS: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
       logging: false,
+      onclone(cloneDoc) {
+        // Replace pixel/mini imgs with nearest-neighbour canvases in the clone
+        for(const img of cloneDoc.querySelectorAll('img[data-cap-w]')){
+          const w = +img.dataset.capW, h = +img.dataset.capH;
+          if(!w || !h) continue;
+          const cnv = cloneDoc.createElement('canvas');
+          cnv.width = w; cnv.height = h;
+          const cs = img.ownerDocument.defaultView.getComputedStyle(img);
+          cnv.style.cssText = img.style.cssText;
+          cnv.style.display = cs.display || 'block';
+          cnv.style.width = cs.width;
+          cnv.style.height = cs.height;
+          const ctx = cnv.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
+          const src = img.src;
+          const tmp = new Image();
+          tmp.src = src;
+          ctx.drawImage(tmp, 0, 0, w, h);
+          img.parentNode.replaceChild(cnv, img);
+        }
+      },
     });
+    // Clean up data attributes
+    for(const img of page.querySelectorAll('img[data-cap-w]')){
+      delete img.dataset.capW; delete img.dataset.capH;
+    }
     await new Promise((res, rej) => canvas.toBlob(blob => {
       if(!blob){ rej(new Error('Canvas export failed')); return; }
       const url = URL.createObjectURL(blob);
@@ -2164,9 +2193,12 @@ el('downloadBtn').addEventListener('click', async () => {
       res();
     }, 'image/png'));
   } catch(err) {
+    // Clean up data attributes on error too
+    for(const img of page.querySelectorAll('img[data-cap-w]')){
+      delete img.dataset.capW; delete img.dataset.capH;
+    }
     alert('PNG export failed: ' + err.message);
   } finally {
-    restorePixel();
     document.body.removeAttribute('data-exporting');
     hideLoading();
   }
