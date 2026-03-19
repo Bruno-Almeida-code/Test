@@ -107,24 +107,67 @@ body{
   gap: 6px;
 }
 .sidebar-header{
-  padding: 8px 0 14px;
+  padding: 10px 0 14px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
+  margin-bottom: 8px;
 }
-.pokemon-logo{
+.app-title{
   font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 34px;
+  font-size: 28px;
   letter-spacing: 2px;
-  color: #FFCB05;
-  -webkit-text-stroke: 2.5px #2B5FA7;
-  paint-order: stroke fill;
+  color: var(--text);
   line-height: 1;
   user-select: none;
 }
+.app-title span{
+  color: var(--muted);
+  font-size: 22px;
+  letter-spacing: 1.5px;
+}
 
-.stage-wrap{ flex: 1; overflow: auto; padding: 32px; background: var(--panel2); }
+.stage-wrap{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel2);
+}
+.stage-toolbar{
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.zoom-ctrl{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoom-step{
+  width: 26px; height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font: 14px/1 'Poppins', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+.zoom-step:hover{ background: var(--panel2); }
+#zoom{ width: 90px; accent-color: var(--accent); cursor: pointer; }
+#zoomVal{
+  font: 500 11px/1 'Poppins', sans-serif;
+  color: var(--muted);
+  min-width: 34px;
+  text-align: center;
+}
+.stage-scroll{ flex: 1; overflow: auto; padding: 32px; }
 .stage{ transform: scale(var(--zoom)); transform-origin: top left; }
 #root{ display: flex; flex-direction: column; gap: 22px; }
 
@@ -348,12 +391,13 @@ input[type="range"]{
 
 small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; margin: 4px 0; }
 
-.actions-footer{
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+.actions-bar{
+  display: flex;
+  gap: 6px;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
 }
-.actions{ display: flex; gap: 6px; padding: 4px 0 8px; }
 
 
 /* ╔══════════════════════════════════╗
@@ -773,12 +817,9 @@ body[data-exporting="1"] .stage{ transform: none !important; }
   }
   .sidebar, .loading{ display: none !important; }
   .app{ display: block; background: #fff !important; }
-  .stage-wrap{
-    display: block;
-    padding: 0 !important;
-    background: #fff !important;
-    overflow: hidden;
-  }
+  .stage-wrap{ display: block; background: #fff !important; overflow: hidden; }
+  .stage-toolbar{ display: none !important; }
+  .stage-scroll{ padding: 0 !important; overflow: hidden; }
   .stage{ transform: none !important; }
   #root{ gap: 0 !important; }
   .page{
@@ -811,12 +852,19 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
     <div class="sidebar-header">
-      <div class="pokemon-logo" aria-label="Pokémon">POKÉMON</div>
+      <div class="app-title">POKÉMON <span>CARD</span></div>
     </div>
 
     <div class="tabs">
       <button class="tab active" data-mode="poster">Poster</button>
       <button class="tab" data-mode="cards">Cards</button>
+    </div>
+
+    <!-- ══════ ACTION BUTTONS ══════ -->
+    <div class="actions-bar">
+      <button class="btn primary" id="buildBtn">▶ Build</button>
+      <button class="btn" id="printBtn">⎙ PDF</button>
+      <button class="btn" id="downloadBtn">↓ PNG</button>
     </div>
 
     <!-- ══════ DATASET & LOOK ══════ -->
@@ -861,7 +909,6 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             Snap to integer pixels
           </label>
         </div>
-        <input id="zoom" type="hidden" value="0.35">
         <div class="row">
           <label style="width:100%">Custom IDs (optional)
             <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
@@ -1052,22 +1099,23 @@ body[data-exporting="1"] .stage{ transform: none !important; }
       </div>
     </details>
 
-    <!-- ══════ ACTION BUTTONS ══════ -->
-    <div class="actions-footer">
-      <div class="actions">
-        <button class="btn primary" id="buildBtn">▶ Build</button>
-        <button class="btn" id="printBtn">⎙ Print / PDF</button>
-        <button class="btn" id="downloadBtn">↓ PNG</button>
-      </div>
-      <small>Use the print dialog to select specific pages after building.</small>
-    </div>
-
   </aside>
 
   <!-- ══════ STAGE (preview area) ══════ -->
   <main class="stage-wrap">
-    <div class="stage">
-      <div id="root"></div>
+    <div class="stage-toolbar">
+      <div class="zoom-ctrl">
+        <button class="zoom-step" id="zoomOut" title="Zoom out">−</button>
+        <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
+        <span id="zoomVal">35%</span>
+        <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
+      </div>
+      <button class="zoom-step" id="zoomFit" title="Fit to window">↔ Fit</button>
+    </div>
+    <div class="stage-scroll">
+      <div class="stage">
+        <div id="root"></div>
+      </div>
     </div>
   </main>
 </div>
@@ -2038,19 +2086,35 @@ el('printBtn').addEventListener('click', async () => {
 el('downloadBtn').addEventListener('click', async () => {
   await readyFonts();
   const page = document.querySelector('.page');
-  if(!page) return;
+  if(!page){ alert('Build first, then export.'); return; }
   document.body.dataset.exporting = '1';
+  showLoading();
   try {
     await preloadImages(page);
-    const canvas = await html2canvas(page, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = 'pokemon-page.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const canvas = await html2canvas(page, {
+      scale: 1,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+    await new Promise((res, rej) => canvas.toBlob(blob => {
+      if(!blob){ rej(new Error('Canvas export failed')); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'pokemon-page.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      res();
+    }, 'image/png'));
+  } catch(err) {
+    alert('PNG export failed: ' + err.message);
   } finally {
     document.body.removeAttribute('data-exporting');
+    hideLoading();
   }
 });
 
@@ -2061,21 +2125,28 @@ el('buildBtn').addEventListener('click', build);
 // ║  12. INIT                         ║
 // ╚══════════════════════════════════╝
 
-// Auto-fit stage zoom to available width
-function autoZoom(){
-  const wrap = document.querySelector('.stage-wrap');
-  if(!wrap) return;
-  const pageW = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue('--page-w')
-  ) || 2480;
-  const pad = 64; // stage-wrap padding (32px each side)
-  const z = Math.max(0.15, Math.min(1.0, (wrap.clientWidth - pad) / pageW));
-  const rounded = Math.round(z * 1000) / 1000;
+// Zoom helpers
+function applyZoom(z){
+  const clamped = Math.max(0.10, Math.min(1.0, z));
+  const rounded = Math.round(clamped * 100) / 100;
   el('zoom').value = rounded;
+  el('zoomVal').textContent = Math.round(rounded * 100) + '%';
   setVar('--zoom', rounded);
 }
-window.addEventListener('resize', autoZoom);
-autoZoom();
+function fitZoom(){
+  const scroll = document.querySelector('.stage-scroll');
+  if(!scroll) return;
+  const pageW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) || 2480;
+  applyZoom((scroll.clientWidth - 64) / pageW);
+}
+
+// Zoom slider
+el('zoom').addEventListener('input', () => applyZoom(+el('zoom').value));
+el('zoomOut').addEventListener('click', () => applyZoom(+el('zoom').value - 0.05));
+el('zoomIn').addEventListener('click',  () => applyZoom(+el('zoom').value + 0.05));
+el('zoomFit').addEventListener('click', fitZoom);
+window.addEventListener('resize', fitZoom);
+fitZoom();
 
 MODE.set('cards');
 
