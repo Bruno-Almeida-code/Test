@@ -1416,9 +1416,31 @@ async function evoLine(url){
   })(j.chain);
   return [...new Set(out)];
 }
+// Fetch image as data URL for same-origin use in html2canvas
+async function imgToDataURL(src){
+  try{
+    const resp = await fetch(src, { mode: 'cors' });
+    if(!resp.ok) return null;
+    const blob = await resp.blob();
+    return await new Promise(res => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => res(null);
+      fr.readAsDataURL(blob);
+    });
+  } catch{ return null; }
+}
+// Fetch all images in root as data URLs (keyed by src) so html2canvas can render them
 async function preloadImages(root){
   const imgs = [...root.querySelectorAll('img')];
   await Promise.all(imgs.map(i => i.decode().catch(()=>{})));
+  const map = new Map();
+  await Promise.all(imgs.map(async img => {
+    if(!img.src || map.has(img.src)) return;
+    const dataURL = await imgToDataURL(img.src);
+    if(dataURL) map.set(img.src, dataURL);
+  }));
+  return map;
 }
 // Replace pixel <img> elements with nearest-neighbour <canvas> so html2canvas
 // (which ignores image-rendering:pixelated) produces crisp pixel art.
@@ -2141,10 +2163,10 @@ el('downloadBtn').addEventListener('click', async () => {
   document.body.dataset.exporting = '1';
   showLoading();
   try {
-    await preloadImages(page);
-    // Annotate pixel/mini imgs with their live dimensions before html2canvas clones the DOM
+    // Fetch all images as data URLs — html2canvas can't render cross-origin cached images
+    const dataURLs = await preloadImages(page);
+    // Annotate pixel/mini imgs with live dimensions for nearest-neighbour swap in onclone
     for(const img of page.querySelectorAll('img.pixel, img.mini')){
-      try{ await img.decode(); }catch{}
       img.dataset.capW = img.offsetWidth;
       img.dataset.capH = img.offsetHeight;
     }
@@ -2154,8 +2176,13 @@ el('downloadBtn').addEventListener('click', async () => {
       allowTaint: false,
       backgroundColor: '#ffffff',
       logging: false,
-      onclone(cloneDoc) {
-        // Replace pixel/mini imgs with nearest-neighbour canvases in the clone
+      async onclone(cloneDoc) {
+        // Replace all img srcs with data URLs so html2canvas can render cross-origin images
+        for(const img of cloneDoc.querySelectorAll('img')){
+          const du = dataURLs.get(img.src);
+          if(du) img.src = du; // now a same-origin data: URL
+        }
+        // Replace pixel/mini imgs with nearest-neighbour canvases
         for(const img of cloneDoc.querySelectorAll('img[data-cap-w]')){
           const w = +img.dataset.capW, h = +img.dataset.capH;
           if(!w || !h) continue;
@@ -2168,10 +2195,10 @@ el('downloadBtn').addEventListener('click', async () => {
           cnv.style.height = cs.height;
           const ctx = cnv.getContext('2d');
           ctx.imageSmoothingEnabled = false;
-          const src = img.src;
-          const tmp = new Image();
-          tmp.src = src;
-          ctx.drawImage(tmp, 0, 0, w, h);
+          const bmp = new Image();
+          bmp.src = img.src; // already a data URL from the loop above
+          try{ await bmp.decode(); }catch{}
+          ctx.drawImage(bmp, 0, 0, w, h);
           img.parentNode.replaceChild(cnv, img);
         }
       },
@@ -2193,7 +2220,6 @@ el('downloadBtn').addEventListener('click', async () => {
       res();
     }, 'image/png'));
   } catch(err) {
-    // Clean up data attributes on error too
     for(const img of page.querySelectorAll('img[data-cap-w]')){
       delete img.dataset.capW; delete img.dataset.capH;
     }
