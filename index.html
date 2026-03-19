@@ -24,7 +24,8 @@ body.nge{
   --ann:rgba(255,144,24,.92); --clear:#020202; --ring:rgba(120,255,140,.60); --prism:rgba(255,140,0,.98);
   --eu:#6EC8FF; --asia:#FF7A00; --af:#4DF07C; --am:#F2BD31; --ai:#FF4B6E;
 }
-html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-code);overflow:hidden;display:flex;align-items:center;justify-content:center}
+html{width:100%;height:100vh;overflow:hidden}
+body{width:100%;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font-code);overflow:hidden;display:flex;align-items:center;justify-content:center}
 .screen{width:1920px;height:1080px;display:flex;flex-direction:column;padding:20px 30px 13px;position:relative;background:var(--bg);transform:scale(var(--fitScale,1));transform-origin:center center}
 body.nge .screen::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.018) 0 1px,transparent 1px 4px),radial-gradient(circle at 84% 50%,rgba(94,255,126,.09) 0 44px,transparent 44px 80px,rgba(94,255,126,.05) 80px 81px,transparent 81px 122px,rgba(255,126,0,.03) 122px 123px,transparent 123px),linear-gradient(90deg,transparent 0%,rgba(255,120,0,.04) 52%,transparent 100%);mix-blend-mode:screen;opacity:.9}
 .screen::after{content:'';position:absolute;inset:8px;pointer-events:none;background:linear-gradient(var(--ink),var(--ink)) top left/16px 1px no-repeat,linear-gradient(var(--ink),var(--ink)) top left/1px 16px no-repeat,linear-gradient(var(--ink),var(--ink)) top right/16px 1px no-repeat,linear-gradient(var(--ink),var(--ink)) top right/1px 16px no-repeat,linear-gradient(var(--ink),var(--ink)) bottom left/16px 1px no-repeat,linear-gradient(var(--ink),var(--ink)) bottom left/1px 16px no-repeat,linear-gradient(var(--ink),var(--ink)) bottom right/16px 1px no-repeat,linear-gradient(var(--ink),var(--ink)) bottom right/1px 16px no-repeat;opacity:.14}
@@ -749,7 +750,9 @@ document.addEventListener('keydown',e=>{
 });
 
 function updateFitScale(){
-  const scale=Math.min(window.innerWidth/1920, window.innerHeight/1080);
+  const vw=document.documentElement.clientWidth||window.innerWidth;
+  const vh=document.documentElement.clientHeight||window.innerHeight;
+  const scale=Math.min(vw/1920, vh/1080);
   document.documentElement.style.setProperty('--fitScale', scale.toFixed(4));
 }
 updateFitScale();
