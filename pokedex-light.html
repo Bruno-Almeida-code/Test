@@ -797,6 +797,8 @@ img.mini{
    ║  15. PRINT & EXPORT              ║
    ╚══════════════════════════════════╝ */
 body[data-exporting="1"] .stage{ transform: none !important; }
+body[data-exporting="1"] .stage-scroll{ overflow: visible !important; }
+body[data-exporting="1"] .stage-wrap{ overflow: visible !important; background: #fff !important; }
 body[data-exporting="1"] .page{
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -2162,6 +2164,9 @@ el('downloadBtn').addEventListener('click', async () => {
   catch(e){ alert(e.message); return; }
   document.body.dataset.exporting = '1';
   showLoading();
+  const stageScroll = document.querySelector('.stage-scroll');
+  const savedSL = stageScroll ? stageScroll.scrollLeft : 0;
+  const savedST = stageScroll ? stageScroll.scrollTop  : 0;
   try {
     // Fetch all images as data URLs — html2canvas can't render cross-origin cached images
     const dataURLs = await preloadImages(page);
@@ -2170,12 +2175,21 @@ el('downloadBtn').addEventListener('click', async () => {
       img.dataset.capW = img.offsetWidth;
       img.dataset.capH = img.offsetHeight;
     }
+    // Scroll to origin so html2canvas sees full content without scroll clipping
+    if(stageScroll){ stageScroll.scrollLeft = 0; stageScroll.scrollTop = 0; }
+    const pageW = page.offsetWidth, pageH = page.offsetHeight;
     const canvas = await html2canvas(page, {
       scale: 1,
       useCORS: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
       logging: false,
+      width: pageW,
+      height: pageH,
+      windowWidth: pageW,
+      windowHeight: pageH,
+      x: 0, y: 0,
+      scrollX: 0, scrollY: 0,
       async onclone(cloneDoc) {
         // Replace all img srcs with data URLs so html2canvas can render cross-origin images
         for(const img of cloneDoc.querySelectorAll('img')){
@@ -2225,6 +2239,7 @@ el('downloadBtn').addEventListener('click', async () => {
     }
     alert('PNG export failed: ' + err.message);
   } finally {
+    if(stageScroll){ stageScroll.scrollLeft = savedSL; stageScroll.scrollTop = savedST; }
     document.body.removeAttribute('data-exporting');
     hideLoading();
   }
