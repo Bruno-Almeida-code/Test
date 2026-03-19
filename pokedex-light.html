@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Pokédex Poster + Pokémon Cards Builder</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lilita+One&family=Poppins:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
 <style>
 
 /* ╔══════════════════════════════════╗
@@ -113,10 +113,15 @@ body{
   display: flex;
   align-items: center;
 }
-.pokemon-logo-svg{
-  height: 46px;
-  width: auto;
-  display: block;
+.pokemon-logo{
+  font-family: 'Bebas Neue', impact, sans-serif;
+  font-size: 34px;
+  letter-spacing: 2px;
+  color: #FFCB05;
+  -webkit-text-stroke: 2.5px #2B5FA7;
+  paint-order: stroke fill;
+  line-height: 1;
+  user-select: none;
 }
 
 .stage-wrap{ flex: 1; overflow: auto; padding: 32px; background: var(--panel2); }
@@ -173,11 +178,11 @@ details.section[open]{
 details.section + details.section{ margin-top: 4px; }
 
 summary{
-  padding: 11px 14px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .4px;
+  padding: 10px 14px;
+  font-family: 'Bebas Neue', impact, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--muted);
   cursor: pointer;
@@ -758,10 +763,22 @@ img.mini{
 body[data-exporting="1"] .stage{ transform: none !important; }
 
 @media print{
-  @page{ size: A4; margin: 5mm; }
-  html, body{ margin: 0; padding: 0; background: #fff; }
+  /* margin:0 → zoom 0.32 = exactly 300 DPI (96 / 0.32 = 300) fills 210mm */
+  @page{ size: A4 portrait; margin: 0; }
+  html, body{
+    margin: 0; padding: 0;
+    background: #fff !important;
+    overflow: hidden;
+    width: 210mm; height: 297mm;
+  }
   .sidebar, .loading{ display: none !important; }
-  .stage-wrap{ padding: 0 !important; }
+  .app{ display: block; background: #fff !important; }
+  .stage-wrap{
+    display: block;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: hidden;
+  }
   .stage{ transform: none !important; }
   #root{ gap: 0 !important; }
   .page{
@@ -769,7 +786,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
     box-shadow: none !important;
     width: var(--page-w) !important;
     height: var(--page-h) !important;
-    zoom: 0.30;
+    zoom: 0.32;
     margin: 0 !important;
     page-break-after: always;
     break-after: page;
@@ -794,18 +811,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
 
     <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
     <div class="sidebar-header">
-      <!-- Pokémon wordmark SVG logo -->
-      <svg class="pokemon-logo-svg" viewBox="0 0 260 52" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pokémon">
-        <text y="43" x="2"
-          font-family="'Lilita One', cursive"
-          font-size="46"
-          fill="#FFCB05"
-          stroke="#2B5FA7"
-          stroke-width="4"
-          stroke-linejoin="round"
-          paint-order="stroke fill"
-          letter-spacing="-1">POKÉMON</text>
-      </svg>
+      <div class="pokemon-logo" aria-label="Pokémon">POKÉMON</div>
     </div>
 
     <div class="tabs">
@@ -855,11 +861,7 @@ body[data-exporting="1"] .stage{ transform: none !important; }
             Snap to integer pixels
           </label>
         </div>
-        <div class="row">
-          <label style="width:100%">UI Zoom
-            <input id="zoom" type="range" min="0.35" max="1" step="0.01" value="0.35">
-          </label>
-        </div>
+        <input id="zoom" type="hidden" value="0.35">
         <div class="row">
           <label style="width:100%">Custom IDs (optional)
             <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
@@ -1915,7 +1917,7 @@ async function build(){
 // ║  11. EVENT WIRING                 ║
 // ╚══════════════════════════════════╝
 [
-  'gen','style','pxScale','snapInt','zoom','specificIds','sortBy',
+  'gen','style','pxScale','snapInt','specificIds','sortBy',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
   'posterMode','posterFont','capPx','capColor','capOffsetX','capOffsetY',
   'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle',
@@ -1952,17 +1954,43 @@ el('posterRows').addEventListener('input', updateRandomLabel);
 el('posterBestFit').addEventListener('change', updateRandomLabel);
 updateRandomLabel();
 
+let _presetSnap = null;
 el('posterImagePreset').addEventListener('change', () => {
-  if(!el('posterImagePreset').checked) return;
-  el('posterMode').value = 'image';
-  el('posterBestFit').checked = false;
-  el('posterCols').value = '9';
-  el('posterRows').value = '17';
-  el('posterGapX').value = '-2000';
-  el('posterGapY').value = '-500';
-  el('posterPad').value = '250';
-  el('posterShowCaption').checked = false;
-  el('posterShowTitle').checked = true;
+  if(el('posterImagePreset').checked){
+    // Save current settings before overwriting
+    _presetSnap = {
+      posterMode: el('posterMode').value,
+      posterBestFit: el('posterBestFit').checked,
+      posterCols: el('posterCols').value,
+      posterRows: el('posterRows').value,
+      posterGapX: el('posterGapX').value,
+      posterGapY: el('posterGapY').value,
+      posterPad: el('posterPad').value,
+      posterShowCaption: el('posterShowCaption').checked,
+      posterShowTitle: el('posterShowTitle').checked,
+    };
+    el('posterMode').value = 'image';
+    el('posterBestFit').checked = false;
+    el('posterCols').value = '9';
+    el('posterRows').value = '17';
+    el('posterGapX').value = '-2000';
+    el('posterGapY').value = '-500';
+    el('posterPad').value = '250';
+    el('posterShowCaption').checked = false;
+    el('posterShowTitle').checked = true;
+  } else if(_presetSnap){
+    // Restore previous settings
+    el('posterMode').value = _presetSnap.posterMode;
+    el('posterBestFit').checked = _presetSnap.posterBestFit;
+    el('posterCols').value = _presetSnap.posterCols;
+    el('posterRows').value = _presetSnap.posterRows;
+    el('posterGapX').value = _presetSnap.posterGapX;
+    el('posterGapY').value = _presetSnap.posterGapY;
+    el('posterPad').value = _presetSnap.posterPad;
+    el('posterShowCaption').checked = _presetSnap.posterShowCaption;
+    el('posterShowTitle').checked = _presetSnap.posterShowTitle;
+    _presetSnap = null;
+  }
   syncPosterUI();
   syncBestFitUI();
   debouncedBuild();
@@ -2012,13 +2040,18 @@ el('downloadBtn').addEventListener('click', async () => {
   const page = document.querySelector('.page');
   if(!page) return;
   document.body.dataset.exporting = '1';
-  await preloadImages(page);
-  const canvas = await html2canvas(page, { scale:3, useCORS:true, backgroundColor:'#ffffff' });
-  document.body.removeAttribute('data-exporting');
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'page.png';
-  a.click();
+  try {
+    await preloadImages(page);
+    const canvas = await html2canvas(page, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'pokemon-page.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } finally {
+    document.body.removeAttribute('data-exporting');
+  }
 });
 
 el('buildBtn').addEventListener('click', build);
@@ -2027,6 +2060,23 @@ el('buildBtn').addEventListener('click', build);
 // ╔══════════════════════════════════╗
 // ║  12. INIT                         ║
 // ╚══════════════════════════════════╝
+
+// Auto-fit stage zoom to available width
+function autoZoom(){
+  const wrap = document.querySelector('.stage-wrap');
+  if(!wrap) return;
+  const pageW = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--page-w')
+  ) || 2480;
+  const pad = 64; // stage-wrap padding (32px each side)
+  const z = Math.max(0.15, Math.min(1.0, (wrap.clientWidth - pad) / pageW));
+  const rounded = Math.round(z * 1000) / 1000;
+  el('zoom').value = rounded;
+  setVar('--zoom', rounded);
+}
+window.addEventListener('resize', autoZoom);
+autoZoom();
+
 MODE.set('cards');
 
 </script>
