@@ -95,38 +95,38 @@ body{
    ╚══════════════════════════════════╝ */
 .app{
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   /* Full-bleed applied by JS applyFullBleed() below */
 }
 
 .sidebar{
-  width: 400px;
-  min-width: 400px;
-  padding: 20px 16px;
+  width: 100%;
   background: var(--panel);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  overflow: visible;
 }
-.sidebar-header{
-  padding: 10px 0 14px;
+
+/* ── Top row: tabs + zoom + actions ── */
+.topbar-main{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
 }
-.app-title{
-  font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 28px;
-  letter-spacing: 2px;
-  color: var(--text);
-  line-height: 1;
-  user-select: none;
-}
-.app-title span{
-  color: var(--muted);
-  font-size: 22px;
-  letter-spacing: 1.5px;
+
+/* ── Sections row: dropdown panels ── */
+.topbar-sections{
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+  position: relative;
 }
 
 .stage-wrap{
@@ -134,14 +134,15 @@ body{
   overflow: auto;
   background: var(--panel2);
   padding: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 .zoom-bar{
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 0 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
+  padding: 0;
 }
 .zoom-step{
   width: 26px; height: 26px;
@@ -156,7 +157,7 @@ body{
   flex-shrink: 0;
 }
 .zoom-step:hover{ background: var(--panel2); }
-#zoom{ flex: 1; accent-color: var(--accent); cursor: pointer; min-width: 0; }
+#zoom{ width: 100px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
 #zoomVal{
   font: 500 11px/1 'Poppins', sans-serif;
   color: var(--muted);
@@ -164,7 +165,7 @@ body{
   text-align: center;
 }
 .stage-scroll{ flex: 1; overflow: auto; padding: 32px; }
-.stage{ transform: scale(var(--zoom)); transform-origin: top left; }
+.stage{ transform: scale(var(--zoom)); transform-origin: top center; }
 #root{ display: flex; flex-direction: column; gap: 22px; }
 
 
@@ -202,24 +203,21 @@ body{
 /* ╔══════════════════════════════════╗
    ║  5. COLLAPSIBLE SECTIONS         ║
    ╚══════════════════════════════════╝ */
+/* ── Section = dropdown panel trigger ── */
 details.section{
-  border: 1px solid var(--border);
-  border-left: 3px solid transparent;
-  border-radius: var(--radius);
+  position: relative;
+  border: none;
+  border-right: 1px solid var(--border);
   background: var(--panel);
-  overflow: hidden;
-  transition: border-color .2s, background .15s;
+  overflow: visible;
 }
-details.section[open]{
-  background: var(--panel);
-  border-left-color: var(--accent);
-}
-details.section + details.section{ margin-top: 4px; }
+details.section:first-child{ border-left: 1px solid var(--border); }
+details.section[open]{ background: var(--panel2); }
 
 summary{
-  padding: 10px 14px;
+  padding: 9px 16px;
   font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -228,31 +226,44 @@ summary{
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   user-select: none;
-  transition: color .15s;
+  white-space: nowrap;
+  height: 100%;
+  transition: color .15s, background .15s;
 }
 summary::-webkit-details-marker{ display: none; }
-summary .s-icon{
-  font-size: 13px;
-  flex-shrink: 0;
-  opacity: .75;
-}
+summary .s-icon{ font-size: 12px; opacity: .7; flex-shrink: 0; }
 summary::after{
   content: '';
-  margin-left: auto;
-  width: 6px; height: 6px;
-  border-right: 1.5px solid var(--muted);
-  border-bottom: 1.5px solid var(--muted);
-  transform: rotate(-45deg);
+  margin-left: 6px;
+  width: 5px; height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
   transition: transform .2s;
   flex-shrink: 0;
 }
-details[open] > summary::after{ transform: rotate(45deg); }
+details[open] > summary::after{ transform: rotate(-135deg); }
 details.section[open] > summary{ color: var(--text); }
-summary:hover{ color: var(--text); }
+summary:hover{ color: var(--text); background: var(--panel2); }
 
-.section-body{ padding: 2px 12px 14px; }
+/* Dropdown panel opens downward */
+.section-body{
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  min-width: 300px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.10);
+  padding: 12px 14px 16px;
+}
 .section-body .row:first-child{ margin-top: 0; }
 
 
@@ -394,9 +405,6 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
 .actions-bar{
   display: flex;
   gap: 6px;
-  padding: 6px 0 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
 }
 
 
@@ -855,30 +863,33 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
 <div class="app">
   <aside class="sidebar">
 
-    <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
-    <div class="tabs">
-      <button class="tab active" data-mode="poster">Poster</button>
-      <button class="tab" data-mode="cards">Cards</button>
+    <!-- ══════ TOP ROW: TABS + ZOOM + ACTIONS ══════ -->
+    <div class="topbar-main">
+      <div class="tabs">
+        <button class="tab active" data-mode="poster">Poster</button>
+        <button class="tab" data-mode="cards">Cards</button>
+      </div>
+
+      <div class="zoom-bar">
+        <button class="zoom-step" id="zoomOut" title="Zoom out">−</button>
+        <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
+        <span id="zoomVal">35%</span>
+        <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
+        <button class="zoom-step" id="zoomFit" title="Fit to window" style="width:auto;padding:0 8px;font-size:11px">↔ Fit</button>
+      </div>
+
+      <div class="actions-bar">
+        <button class="btn primary" id="buildBtn">▶ Build</button>
+        <button class="btn" id="printBtn">⎙ PDF</button>
+        <button class="btn" id="downloadBtn">↓ PNG</button>
+      </div>
     </div>
 
-    <!-- ══════ ZOOM BAR ══════ -->
-    <div class="zoom-bar">
-      <button class="zoom-step" id="zoomOut" title="Zoom out">−</button>
-      <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
-      <span id="zoomVal">35%</span>
-      <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
-      <button class="zoom-step" id="zoomFit" title="Fit to window" style="width:auto;padding:0 8px;font-size:11px">↔ Fit</button>
-    </div>
-
-    <!-- ══════ ACTION BUTTONS ══════ -->
-    <div class="actions-bar">
-      <button class="btn primary" id="buildBtn">▶ Build</button>
-      <button class="btn" id="printBtn">⎙ PDF</button>
-      <button class="btn" id="downloadBtn">↓ PNG</button>
-    </div>
+    <!-- ══════ SECTIONS ROW (dropdown panels) ══════ -->
+    <div class="topbar-sections">
 
     <!-- ══════ DATASET & LOOK ══════ -->
-    <details class="section" open>
+    <details class="section">
       <summary><span class="s-icon">🗂</span>Dataset & Look</summary>
       <div class="section-body">
         <div class="row">
@@ -1020,7 +1031,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
     </details>
 
     <!-- ══════ CARDS: GRID ══════ -->
-    <details class="section" id="cardsPanel" open>
+    <details class="section" id="cardsPanel">
       <summary><span class="s-icon">⊞</span>Cards Grid</summary>
       <div class="section-body">
         <input id="cardCols" type="hidden" value="3">
@@ -1109,6 +1120,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       </div>
     </details>
 
+    </div><!-- end .topbar-sections -->
   </aside>
 
   <!-- ══════ STAGE (preview area) ══════ -->
@@ -2272,24 +2284,12 @@ function applyFullBleed(){
 }
 
 // Zoom helpers
-function centerStage(){
-  const stage = document.querySelector('.stage');
-  const wrap  = document.querySelector('.stage-wrap');
-  if(!stage || !wrap) return;
-  const zoom  = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom')) || 0.35;
-  const pageW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) || 2480;
-  const scaledW = pageW * zoom;
-  const available = wrap.clientWidth - 64; // 32px padding each side
-  const left = Math.max(0, (available - scaledW) / 2);
-  stage.style.marginLeft = left + 'px';
-}
 function applyZoom(z){
   const clamped = Math.max(0.10, Math.min(1.0, z));
   const rounded = Math.round(clamped * 100) / 100;
   el('zoom').value = rounded;
   el('zoomVal').textContent = Math.round(rounded * 100) + '%';
   setVar('--zoom', rounded);
-  centerStage();
 }
 function fitZoom(){
   const wrap = document.querySelector('.stage-wrap');
@@ -2306,6 +2306,14 @@ el('zoomFit').addEventListener('click', fitZoom);
 window.addEventListener('resize', () => { applyFullBleed(); fitZoom(); });
 applyFullBleed();
 fitZoom();
+
+// Close open section dropdowns when clicking outside the topbar
+document.addEventListener('click', e => {
+  if(!e.target.closest('.topbar-sections')){
+    document.querySelectorAll('.topbar-sections details[open]')
+      .forEach(d => d.removeAttribute('open'));
+  }
+});
 
 MODE.set('cards');
 
