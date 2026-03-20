@@ -87,6 +87,7 @@ body{
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 
@@ -131,6 +132,7 @@ body{
 
 .stage-wrap{
   flex: 1;
+  min-width: 0;
   overflow: auto;
   background: var(--panel2);
   padding: 32px;
@@ -298,9 +300,10 @@ input[type="number"], input[type="text"], select{
   height: 32px !important;
   min-width: 100px;
   padding: 4px 8px !important;
-  /* Reset WordPress theme overrides that turn selects into listboxes */
   -webkit-appearance: auto !important;
   appearance: auto !important;
+}
+input[type="number"], input[type="text"]{
   overflow: hidden !important;
 }
 textarea{
