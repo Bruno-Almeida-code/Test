@@ -87,7 +87,9 @@ body{
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+}
+@media screen{
+  body{ overflow-x: hidden; }
 }
 
 
@@ -167,7 +169,7 @@ body{
   text-align: center;
 }
 .stage-scroll{ flex: 1; overflow: auto; padding: 32px; }
-.stage{ transform: scale(var(--zoom)); transform-origin: top center; }
+.stage{ zoom: var(--zoom); }
 #root{ display: flex; flex-direction: column; gap: 22px; }
 
 
@@ -297,14 +299,15 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
   border-color: var(--accent);
 }
 input[type="number"], input[type="text"], select{
-  height: 32px !important;
   min-width: 100px;
   padding: 4px 8px !important;
-  -webkit-appearance: auto !important;
-  appearance: auto !important;
 }
 input[type="number"], input[type="text"]{
+  height: 32px !important;
   overflow: hidden !important;
+}
+select{
+  height: auto;
 }
 textarea{
   width: 100%;
@@ -813,7 +816,7 @@ img.mini{
 /* ╔══════════════════════════════════╗
    ║  15. PRINT & EXPORT              ║
    ╚══════════════════════════════════╝ */
-body[data-exporting="1"] .stage{ transform: none !important; }
+body[data-exporting="1"] .stage{ zoom: 1 !important; }
 body[data-exporting="1"] .stage-scroll{ overflow: visible !important; }
 body[data-exporting="1"] .stage-wrap{ overflow: visible !important; background: #fff !important; }
 body[data-exporting="1"] .page{
@@ -834,7 +837,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
   .sidebar, .loading{ display: none !important; }
   .app{ display: block; background: #fff !important; }
   .stage-wrap{ display: block; background: #fff !important; overflow: hidden; padding: 0 !important; }
-  .stage{ transform: none !important; }
+  .stage{ zoom: 1 !important; }
   #root{ gap: 0 !important; }
   .page{
     border-radius: 0 !important;
