@@ -892,7 +892,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Generation
-            <select size="1" id="gen">
+            <select id="gen">
               <option value="1" selected>Gen 1 — Kanto</option>
               <option value="2">Gen 2 — Johto</option>
               <option value="3">Gen 3 — Hoenn</option>
@@ -906,7 +906,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
             </select>
           </label>
           <label>Art style
-            <select size="1" id="style">
+            <select id="style">
               <option value="pixel" selected>Pixel (96px)</option>
               <option value="home">HD (HOME)</option>
               <option value="art">Official art</option>
@@ -915,7 +915,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
         </div>
         <div class="row">
           <label>Pixel scale
-            <select size="1" id="pxScale"><option value="auto" selected>Auto</option></select>
+            <select id="pxScale"><option value="auto" selected>Auto</option></select>
           </label>
 
         </div>
@@ -944,7 +944,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
           <button id="addAllTypeBtn" style="font-size:11px;padding:3px 10px">Add all selected types</button>
           <label style="flex-direction:row;gap:6px;align-items:center;font-size:12px">
             Sort by
-            <select size="1" id="sortBy" style="font-size:12px;padding:2px 4px">
+            <select id="sortBy" style="font-size:12px;padding:2px 4px">
               <option value="number">Number</option>
               <option value="type">Type</option>
             </select>
@@ -963,14 +963,14 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Mode
-            <select size="1" id="posterMode">
+            <select id="posterMode">
               <option value="image" selected>Image</option>
               <option value="grid">Grid</option>
               <option value="scatter">Scatter</option>
             </select>
           </label>
           <label>Font
-            <select size="1" id="posterFont">
+            <select id="posterFont">
               <option value="VT323" selected>VT323 (pixel)</option>
               <option value="Bebas Neue">Bebas Neue</option>
             </select>
@@ -1047,7 +1047,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Mode
-            <select size="1" id="cardsPaging">
+            <select id="cardsPaging">
               <option value="sequence" selected>Sequence</option>
               <option value="evolution">Evolution chains</option>
             </select>
@@ -1095,7 +1095,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Text mode
-            <select size="1" id="textMode">
+            <select id="textMode">
               <option value="auto" selected>Auto (scales with card)</option>
               <option value="manual">Manual (px)</option>
             </select>
