@@ -615,6 +615,7 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
+  -webkit-font-smoothing: auto;
 }
 .head .line{
   display: flex;
@@ -622,10 +623,12 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   gap: 16px;
 }
 .head .bold{
-  font-weight: 900;
+  font-weight: 400;
   font-size: 34px;
   letter-spacing: .8px;
   line-height: 1.05;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
 }
 .head .num{
   display: block;
@@ -2208,7 +2211,7 @@ el('printBtn').addEventListener('click', async () => {
   const links = [...document.querySelectorAll('link')].map(l => l.outerHTML).join('');
   const css   = [...document.querySelectorAll('style')].map(s => s.textContent).join('');
   // Per-page wrappers sized to exact A4 so zoom rounding never bleeds to next page
-  const printFix = `@media print{body,html{margin:0;padding:0;}.print-pg{width:210mm;height:297mm;overflow:hidden;break-after:page;break-inside:avoid;margin:0;padding:0;}.page{zoom:0.32!important;margin:0!important;break-after:auto!important;break-inside:auto!important;}}`;
+  const printFix = `@media print{body,html{margin:0;padding:0;}.print-pg{width:210mm;height:297mm;overflow:hidden;break-after:page;break-inside:avoid;margin:0;padding:0;}.page{zoom:0.32!important;margin:0!important;break-after:auto!important;break-inside:auto!important;}.cards .inner{align-items:flex-start!important;justify-content:flex-start!important;}.grid{align-content:start!important;}}`;
 
   const html =
     `<!DOCTYPE html><html style="${rootStyle.replace(/"/g,'&quot;')}"><head>` +
