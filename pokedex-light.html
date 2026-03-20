@@ -96,13 +96,7 @@ body{
 .app{
   display: flex;
   min-height: 100vh;
-  /* Break out of WordPress content container max-width */
-  width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  /* Full-bleed applied by JS applyFullBleed() below */
 }
 
 .sidebar{
@@ -2263,13 +2257,39 @@ el('buildBtn').addEventListener('click', build);
 // ║  12. INIT                         ║
 // ╚══════════════════════════════════╝
 
+// Break out of WordPress content max-width container by measuring actual offset
+function applyFullBleed(){
+  const app = document.querySelector('.app');
+  if(!app) return;
+  app.style.marginLeft = '';
+  app.style.marginRight = '';
+  app.style.width = '';
+  const rect = app.getBoundingClientRect();
+  const scrollX = window.scrollX || window.pageXOffset || 0;
+  app.style.marginLeft  = -(rect.left  + scrollX) + 'px';
+  app.style.marginRight = -(window.innerWidth - rect.right - scrollX) + 'px';
+  app.style.width = window.innerWidth + 'px';
+}
+
 // Zoom helpers
+function centerStage(){
+  const stage = document.querySelector('.stage');
+  const wrap  = document.querySelector('.stage-wrap');
+  if(!stage || !wrap) return;
+  const zoom  = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom')) || 0.35;
+  const pageW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) || 2480;
+  const scaledW = pageW * zoom;
+  const available = wrap.clientWidth - 64; // 32px padding each side
+  const left = Math.max(0, (available - scaledW) / 2);
+  stage.style.marginLeft = left + 'px';
+}
 function applyZoom(z){
   const clamped = Math.max(0.10, Math.min(1.0, z));
   const rounded = Math.round(clamped * 100) / 100;
   el('zoom').value = rounded;
   el('zoomVal').textContent = Math.round(rounded * 100) + '%';
   setVar('--zoom', rounded);
+  centerStage();
 }
 function fitZoom(){
   const wrap = document.querySelector('.stage-wrap');
@@ -2283,7 +2303,8 @@ el('zoom').addEventListener('input', () => applyZoom(+el('zoom').value));
 el('zoomOut').addEventListener('click', () => applyZoom(+el('zoom').value - 0.05));
 el('zoomIn').addEventListener('click',  () => applyZoom(+el('zoom').value + 0.05));
 el('zoomFit').addEventListener('click', fitZoom);
-window.addEventListener('resize', fitZoom);
+window.addEventListener('resize', () => { applyFullBleed(); fitZoom(); });
+applyFullBleed();
 fitZoom();
 
 MODE.set('cards');
