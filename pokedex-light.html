@@ -497,7 +497,7 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
 }
 .poster-title .gen-label{ color: #888; }
 .poster-title .title-sep{ color: #888; padding: 0 6px; }
-.poster-title .reg-label{ color: #111; font-weight: 800; }
+.poster-title .reg-label{ color: #111; font-weight: 400; }
 .poster-title .title-desc-wrap{
   font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
   font-size: 72px;
@@ -2211,7 +2211,15 @@ el('printBtn').addEventListener('click', async () => {
   const links = [...document.querySelectorAll('link')].map(l => l.outerHTML).join('');
   const css   = [...document.querySelectorAll('style')].map(s => s.textContent).join('');
   // Per-page wrappers sized to exact A4 so zoom rounding never bleeds to next page
-  const printFix = `@media print{body,html{margin:0;padding:0;}.print-pg{width:210mm;height:297mm;overflow:hidden;break-after:page;break-inside:avoid;margin:0;padding:0;}.page{zoom:0.32!important;margin:0!important;break-after:auto!important;break-inside:auto!important;}.cards .inner{align-items:flex-start!important;justify-content:flex-start!important;}.grid{align-content:start!important;}}`;
+  // printFix is unconditional — iframe is only used for printing so @media print would
+  // delay the margin/alignment reset until the print context fires (too late in some browsers).
+  const printFix = `html,body{margin:0!important;padding:0!important;background:#fff;}` +
+    `#root{display:block!important;margin:0!important;padding:0!important;gap:0!important;}` +
+    `.print-pg{display:block!important;width:210mm;height:297mm;overflow:hidden;margin:0!important;padding:0!important;}` +
+    `.page{zoom:0.32!important;margin:0!important;}` +
+    `.cards .inner{align-items:flex-start!important;justify-content:flex-start!important;}` +
+    `.grid{align-content:start!important;height:auto!important;}` +
+    `@media print{@page{size:A4 portrait;margin:0;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}`;
 
   const html =
     `<!DOCTYPE html><html style="${rootStyle.replace(/"/g,'&quot;')}"><head>` +
