@@ -169,7 +169,8 @@ body{
   text-align: center;
 }
 .stage-scroll{ flex: 1; overflow: auto; padding: 32px; }
-.stage{ zoom: var(--zoom); }
+.stage-sizer{ overflow: hidden; margin: 0 auto; }
+.stage{ transform: scale(var(--zoom)); transform-origin: top left; }
 #root{ display: flex; flex-direction: column; gap: 22px; }
 
 
@@ -307,7 +308,14 @@ input[type="number"], input[type="text"]{
   overflow: hidden !important;
 }
 select{
-  height: auto;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 32px !important;
+  padding-right: 28px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  cursor: pointer;
 }
 textarea{
   width: 100%;
@@ -816,8 +824,8 @@ img.mini{
 /* ╔══════════════════════════════════╗
    ║  15. PRINT & EXPORT              ║
    ╚══════════════════════════════════╝ */
-body[data-exporting="1"] .stage{ zoom: 1 !important; }
-body[data-exporting="1"] .stage-scroll{ overflow: visible !important; }
+body[data-exporting="1"] .stage{ transform: none !important; }
+body[data-exporting="1"] .stage-sizer{ width: auto !important; height: auto !important; overflow: visible !important; }
 body[data-exporting="1"] .stage-wrap{ overflow: visible !important; background: #fff !important; }
 body[data-exporting="1"] .page{
   border-radius: 0 !important;
@@ -826,18 +834,17 @@ body[data-exporting="1"] .page{
 body[data-exporting="1"] .card{ box-shadow: none !important; }
 
 @media print{
-  /* margin:0 → zoom 0.32 = exactly 300 DPI (96 / 0.32 = 300) fills 210mm */
+  /* zoom 0.32 = exactly 300 DPI (96 / 0.32 = 300) fills 210mm A4 */
   @page{ size: A4 portrait; margin: 0; }
   html, body{
     margin: 0; padding: 0;
     background: #fff !important;
-    overflow: hidden;
-    width: 210mm; height: 297mm;
   }
   .sidebar, .loading{ display: none !important; }
   .app{ display: block; background: #fff !important; }
-  .stage-wrap{ display: block; background: #fff !important; overflow: hidden; padding: 0 !important; }
-  .stage{ zoom: 1 !important; }
+  .stage-wrap{ display: block; background: #fff !important; padding: 0 !important; }
+  .stage-sizer{ width: auto !important; height: auto !important; overflow: visible !important; }
+  .stage{ transform: none !important; }
   #root{ gap: 0 !important; }
   .page{
     border-radius: 0 !important;
@@ -1129,8 +1136,10 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
 
   <!-- ══════ STAGE (preview area) ══════ -->
   <main class="stage-wrap">
-    <div class="stage">
-      <div id="root"></div>
+    <div class="stage-sizer">
+      <div class="stage">
+        <div id="root"></div>
+      </div>
     </div>
   </main>
 </div>
@@ -2049,6 +2058,7 @@ async function build(){
 
     if(MODE.get() === 'poster') await renderPoster(list);
     else await renderCards(list);
+    updateSizer();
   } finally {
     hideLoading();
   }
@@ -2185,7 +2195,7 @@ el('downloadBtn').addEventListener('click', async () => {
   catch(e){ alert(e.message); return; }
   document.body.dataset.exporting = '1';
   showLoading();
-  const stageScroll = document.querySelector('.stage-scroll');
+  const stageScroll = document.querySelector('.stage-wrap');
   const savedSL = stageScroll ? stageScroll.scrollLeft : 0;
   const savedST = stageScroll ? stageScroll.scrollTop  : 0;
   try {
@@ -2288,12 +2298,22 @@ function applyFullBleed(){
 }
 
 // Zoom helpers
+function updateSizer(){
+  const sizer = document.querySelector('.stage-sizer');
+  const stage = document.querySelector('.stage');
+  if(!sizer || !stage || document.body.dataset.exporting === '1') return;
+  const pageW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) || 2480;
+  const zoom  = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom'))  || 0.35;
+  sizer.style.width  = Math.round(pageW              * zoom) + 'px';
+  sizer.style.height = Math.round(stage.scrollHeight * zoom) + 'px';
+}
 function applyZoom(z){
   const clamped = Math.max(0.10, Math.min(1.0, z));
   const rounded = Math.round(clamped * 100) / 100;
   el('zoom').value = rounded;
   el('zoomVal').textContent = Math.round(rounded * 100) + '%';
   setVar('--zoom', rounded);
+  updateSizer();
 }
 function fitZoom(){
   const wrap = document.querySelector('.stage-wrap');
