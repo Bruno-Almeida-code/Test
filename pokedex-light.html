@@ -93,7 +93,17 @@ body{
 /* ╔══════════════════════════════════╗
    ║  3. APP LAYOUT                   ║
    ╚══════════════════════════════════╝ */
-.app{ display: flex; min-height: 100vh; }
+.app{
+  display: flex;
+  min-height: 100vh;
+  /* Break out of WordPress content container max-width */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
 
 .sidebar{
   width: 400px;
@@ -282,9 +292,13 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
   border-color: var(--accent);
 }
 input[type="number"], input[type="text"], select{
-  height: 32px;
+  height: 32px !important;
   min-width: 100px;
-  padding: 4px 8px;
+  padding: 4px 8px !important;
+  /* Reset WordPress theme overrides that turn selects into listboxes */
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  overflow: hidden !important;
 }
 textarea{
   width: 100%;
@@ -848,10 +862,6 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
   <aside class="sidebar">
 
     <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
-    <div class="sidebar-header">
-      <div class="app-title">POKÉMON <span>CARD</span></div>
-    </div>
-
     <div class="tabs">
       <button class="tab active" data-mode="poster">Poster</button>
       <button class="tab" data-mode="cards">Cards</button>
@@ -879,7 +889,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Generation
-            <select id="gen">
+            <select size="1" id="gen">
               <option value="1" selected>Gen 1 — Kanto</option>
               <option value="2">Gen 2 — Johto</option>
               <option value="3">Gen 3 — Hoenn</option>
@@ -893,7 +903,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
             </select>
           </label>
           <label>Art style
-            <select id="style">
+            <select size="1" id="style">
               <option value="pixel" selected>Pixel (96px)</option>
               <option value="home">HD (HOME)</option>
               <option value="art">Official art</option>
@@ -902,7 +912,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
         </div>
         <div class="row">
           <label>Pixel scale
-            <select id="pxScale"><option value="auto" selected>Auto</option></select>
+            <select size="1" id="pxScale"><option value="auto" selected>Auto</option></select>
           </label>
 
         </div>
@@ -931,7 +941,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
           <button id="addAllTypeBtn" style="font-size:11px;padding:3px 10px">Add all selected types</button>
           <label style="flex-direction:row;gap:6px;align-items:center;font-size:12px">
             Sort by
-            <select id="sortBy" style="font-size:12px;padding:2px 4px">
+            <select size="1" id="sortBy" style="font-size:12px;padding:2px 4px">
               <option value="number">Number</option>
               <option value="type">Type</option>
             </select>
@@ -950,14 +960,14 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Mode
-            <select id="posterMode">
+            <select size="1" id="posterMode">
               <option value="image" selected>Image</option>
               <option value="grid">Grid</option>
               <option value="scatter">Scatter</option>
             </select>
           </label>
           <label>Font
-            <select id="posterFont">
+            <select size="1" id="posterFont">
               <option value="VT323" selected>VT323 (pixel)</option>
               <option value="Bebas Neue">Bebas Neue</option>
             </select>
@@ -1034,7 +1044,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Mode
-            <select id="cardsPaging">
+            <select size="1" id="cardsPaging">
               <option value="sequence" selected>Sequence</option>
               <option value="evolution">Evolution chains</option>
             </select>
@@ -1082,7 +1092,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       <div class="section-body">
         <div class="row">
           <label>Text mode
-            <select id="textMode">
+            <select size="1" id="textMode">
               <option value="auto" selected>Auto (scales with card)</option>
               <option value="manual">Manual (px)</option>
             </select>
