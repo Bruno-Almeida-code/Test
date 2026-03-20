@@ -2183,8 +2183,46 @@ el('cleanBtn').addEventListener('click', () => {
 
 el('printBtn').addEventListener('click', async () => {
   await readyFonts();
-  for(const p of document.querySelectorAll('.page')) await preloadImages(p);
-  window.print();
+  const pages = [...document.querySelectorAll('.page')];
+  if(!pages.length){ alert('Build first, then export.'); return; }
+
+  // Collect data URLs for all pages so cross-origin images render in the popup
+  const dataURLs = new Map();
+  for(const p of pages){
+    const du = await preloadImages(p);
+    for(const [k,v] of du) dataURLs.set(k, v);
+  }
+
+  const w = window.open('', '_blank', 'width=100,height=100');
+  if(!w){ alert('Pop-ups are blocked — please allow them to use PDF export.'); return; }
+
+  // Clone pages and inline data URLs
+  const pagesHTML = pages.map(p => {
+    const clone = p.cloneNode(true);
+    for(const img of clone.querySelectorAll('img')){
+      const du = dataURLs.get(img.src);
+      if(du) img.src = du;
+    }
+    return clone.outerHTML;
+  }).join('');
+
+  // Pass current CSS custom properties (e.g. --card-cols set by JS)
+  const rootStyle = document.documentElement.getAttribute('style') || '';
+  // Include font links + full inline CSS (contains @media print rules)
+  const links = [...document.querySelectorAll('link')].map(l => l.outerHTML).join('');
+  const css   = [...document.querySelectorAll('style')].map(s => s.textContent).join('');
+
+  w.document.write(
+    `<!DOCTYPE html><html style="${rootStyle.replace(/"/g,'&quot;')}"><head>` +
+    `<meta charset="utf-8">${links}<style>${css}</style></head>` +
+    `<body><div id="root">${pagesHTML}</div></body></html>`
+  );
+  w.document.close();
+  w.focus();
+  // Wait for fonts/images then print
+  w.addEventListener('load', () => { w.print(); w.close(); });
+  // Fallback in case load already fired
+  setTimeout(() => { try{ w.print(); w.close(); }catch{} }, 1500);
 });
 
 el('downloadBtn').addEventListener('click', async () => {
