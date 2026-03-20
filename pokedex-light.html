@@ -301,17 +301,17 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:foc
 }
 input[type="number"], input[type="text"], select{
   min-width: 100px;
-  padding: 4px 8px !important;
 }
 input[type="number"], input[type="text"]{
   height: 32px !important;
+  padding: 4px 8px !important;
   overflow: hidden !important;
 }
 select{
   -webkit-appearance: none !important;
   appearance: none !important;
   height: 32px !important;
-  padding-right: 28px !important;
+  padding: 4px 28px 4px 8px !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
@@ -615,7 +615,8 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   border: none;
   font-family: "VT323", ui-monospace, monospace;
   line-height: 1;
-  -webkit-font-smoothing: auto;
+  -webkit-font-smoothing: none;
+  text-rendering: optimizeSpeed;
 }
 .head .line{
   display: flex;
