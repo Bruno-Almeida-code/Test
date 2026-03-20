@@ -2235,13 +2235,16 @@ el('printBtn').addEventListener('click', async () => {
   const iDoc = iframe.contentDocument || iframe.contentWindow.document;
   iDoc.open(); iDoc.write(html); iDoc.close();
 
+  let printed = false;
   const doPrint = () => {
+    if(printed) return;
+    printed = true;
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
     setTimeout(cleanup, 1000);
   };
   iframe.contentWindow.addEventListener('load', doPrint, { once: true });
-  setTimeout(doPrint, 1500); // fallback if load already fired
+  setTimeout(doPrint, 1500); // fallback if load event already fired before listener attached
 });
 
 el('downloadBtn').addEventListener('click', async () => {
