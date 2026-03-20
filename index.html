@@ -1,0 +1,1993 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pokédex Poster + Pokémon Cards Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+
+/* ╔══════════════════════════════════╗
+   ║  1. CSS VARIABLES                ║
+   ╚══════════════════════════════════╝ */
+:root{
+  /* UI chrome */
+  --bg: #0c0f16;
+  --panel: #14181f;
+  --panel2: #10141b;
+  --text: #e4eaf5;
+  --muted: #8a96b4;
+  --border: #222d42;
+  --accent: #5b9cf5;
+  --accent-bg: rgba(91,156,245,0.12);
+  --accent-border: rgba(91,156,245,0.35);
+  --shadow: 0 8px 24px rgba(0,0,0,.3);
+  --radius: 10px;
+  --zoom: .55;
+
+  /* A4 page at 300 dpi */
+  --page-w: 2480px;
+  --page-h: 3508px;
+
+  /* Poster */
+  --pad-poster: 10px;
+  --poster-cols: 9;
+  --poster-rows: 13;
+  --poster-row-gap: 0px;
+  --poster-neg-row: 20px;
+  --poster-col-gap: 0px;
+  --poster-neg-col: 20px;
+  --poster-name-fz: 18px;
+  --poster-name-color: #111;
+
+  /* Cards */
+  --pad-cards: 0px;
+  --card-cols: 3;
+  --card-rows: 3;
+  --card-gap: 12px;
+  --card-gap-abs: 0px;
+  --card-w: 760px;
+  --card-h: 980px;
+  --card-pad: 40px;
+  --img: 480px;
+  --sprite-shift-y: 0px;
+
+  /* Card: evolution strip */
+  --mini: 56px;
+  --evo-fill: #eceff3;
+  --evo-stroke: #fb923c;
+  --evo-box-on: 0;
+  --evo-box-scale: 0.6;
+  --evo-box-bg: rgba(0,0,0,0.02);
+  --evo-box-border: rgba(0,0,0,0.12);
+
+  /* Card: typography */
+  --head-fz: 26px;
+  --meta-fz: 16px;
+  --meta-label-fz: 36px;
+  --meta-value-fz: 22px;
+  --desc-fz: 36px;
+  --meta-gap: 12px;
+
+  /* Card: colors */
+  --card-box-bg: #fff;
+  --card-box-ink: #000;
+
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  2. RESET & BASE                 ║
+   ╚══════════════════════════════════╝ */
+*{ box-sizing: border-box; margin: 0; }
+body{
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  3. APP LAYOUT                   ║
+   ╚══════════════════════════════════╝ */
+.app{ display: flex; min-height: 100vh; }
+
+.sidebar{
+  width: 400px;
+  min-width: 400px;
+  padding: 20px 16px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar-header{
+  padding: 4px 0 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.sidebar-header h1{
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+}
+
+.stage-wrap{ flex: 1; overflow: auto; padding: 20px; }
+.stage{ transform: scale(var(--zoom)); transform-origin: top left; }
+#root{ display: flex; flex-direction: column; gap: 22px; }
+
+
+/* ╔══════════════════════════════════╗
+   ║  4. TABS                         ║
+   ╚══════════════════════════════════╝ */
+.tabs{
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.tab{
+  flex: 1;
+  height: 32px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: 600 13px/1 'Inter', sans-serif;
+  transition: all .15s;
+}
+.tab:hover{ color: var(--text); background: rgba(255,255,255,0.04); }
+.tab.active{
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  5. COLLAPSIBLE SECTIONS         ║
+   ╚══════════════════════════════════╝ */
+details.section{
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.02);
+  overflow: hidden;
+  transition: background .15s;
+}
+details.section[open]{ background: rgba(255,255,255,0.03); }
+details.section + details.section{ margin-top: 2px; }
+
+summary{
+  padding: 10px 12px;
+  font: 600 11px/1 'Inter', sans-serif;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+summary::-webkit-details-marker{ display: none; }
+summary::before{
+  content: '';
+  width: 5px; height: 5px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform .15s;
+  flex-shrink: 0;
+}
+details[open] > summary::before{ transform: rotate(45deg); }
+summary:hover{ color: var(--text); }
+
+.section-body{ padding: 4px 12px 12px; }
+
+
+/* ╔══════════════════════════════════╗
+   ║  6. FORM CONTROLS                ║
+   ╚══════════════════════════════════╝ */
+.row{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin: 6px 0;
+}
+label{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: 500 11px/1.3 'Inter', sans-serif;
+  color: var(--muted);
+}
+input[type="number"], input[type="text"], select, textarea{
+  font: 400 13px/1.3 'Inter', sans-serif;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:focus{
+  border-color: var(--accent);
+}
+input[type="number"], input[type="text"], select{
+  height: 32px;
+  min-width: 100px;
+  padding: 4px 8px;
+}
+textarea{
+  width: 100%;
+  min-height: 56px;
+  padding: 8px;
+  resize: vertical;
+}
+.type-pill{
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 12px; border: 2px solid transparent;
+  transition: opacity .1s, transform .1s;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  color: #fff; opacity: 0.4; transition: opacity .15s, border-color .15s;
+  user-select: none; text-transform: capitalize;
+}
+.type-pill.active{ opacity: 1; border-color: rgba(255,255,255,0.5); }
+.type-pill.drag-over{ transform: scale(1.12); border-color: #fff; }
+#typeOrderList .type-pill{ cursor: grab; opacity: 1; }
+#typeOrderList .type-pill:active{ cursor: grabbing; }
+input[type="color"]{
+  width: 32px; height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px;
+}
+input[type="range"]{
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  7. TOGGLE SWITCH                ║
+   ╚══════════════════════════════════╝ */
+.toggle{
+  position: relative;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+}
+.toggle input{ opacity: 0; width: 0; height: 0; }
+.toggle-track{
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.toggle-track::after{
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: all .15s;
+}
+.toggle input:checked + .toggle-track{
+  background: var(--accent-bg);
+}
+.toggle input:checked + .toggle-track::after{
+  left: 18px;
+  background: var(--accent);
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  8. BUTTONS & ACTIONS            ║
+   ╚══════════════════════════════════╝ */
+.actions{ display: flex; gap: 6px; padding: 8px 0; }
+
+.btn{
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  cursor: pointer;
+  font: 600 13px/1 'Inter', sans-serif;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover{ background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+.btn:active{ transform: scale(0.97); }
+
+.btn.primary{
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn.primary:hover{ background: #4a8de8; }
+
+small{ color: var(--muted); font-size: 11px; line-height: 1.4; display: block; margin: 4px 0; }
+
+
+/* ╔══════════════════════════════════╗
+   ║  9. LOADING OVERLAY              ║
+   ╚══════════════════════════════════╝ */
+.loading{
+  position: fixed;
+  top: 12px; right: 12px;
+  padding: 8px 14px;
+  background: var(--panel);
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  font: 500 12px/1 'Inter', sans-serif;
+  color: var(--accent);
+  z-index: 999;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.loading.show{ display: flex; }
+.spinner{
+  width: 14px; height: 14px;
+  border: 2px solid var(--accent-bg);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin{ to{ transform: rotate(360deg); } }
+
+
+/* ╔══════════════════════════════════╗
+   ║  10. A4 PAGE                     ║
+   ╚══════════════════════════════════╝ */
+.page{
+  width: var(--page-w);
+  height: var(--page-h);
+  background: #fff;
+  color: #0a0a0a;
+  border-radius: 16px;
+  box-shadow: 0 14px 50px rgba(0,0,0,.45);
+  overflow: hidden;
+  position: relative;
+}
+.page.poster{ overflow: visible; }
+.inner{ width: 100%; height: 100%; }
+
+
+/* ╔══════════════════════════════════╗
+   ║  11. POSTER                      ║
+   ╚══════════════════════════════════╝ */
+.poster .inner{
+  padding: var(--pad-poster);
+  display: flex;
+  flex-direction: column;
+}
+.poster-title{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
+  padding: 16px 20px;
+  line-height: 1;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+.poster-title .title-main{
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 72px;
+  letter-spacing: 2px;
+}
+.poster-title .gen-label{ color: #888; }
+.poster-title .title-sep{ color: #888; padding: 0 6px; }
+.poster-title .reg-label{ color: #111; font-weight: 800; }
+.poster-title .title-desc-wrap{
+  font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
+  font-size: 72px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.poster-grid{
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--poster-cols), 1fr);
+  grid-template-rows: repeat(var(--poster-rows), 1fr);
+  row-gap: var(--poster-row-gap, 0px);
+  column-gap: var(--poster-col-gap, 0px);
+}
+.poster .cell{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
+  margin-top:    calc(var(--poster-neg-row, 0px) * -0.5);
+  margin-bottom: calc(var(--poster-neg-row, 0px) * -0.5);
+  margin-left:   calc(var(--poster-neg-col, 0px) * -0.5);
+  margin-right:  calc(var(--poster-neg-col, 0px) * -0.5);
+}
+.caption{
+  font-family: var(--poster-title-font, "VT323"), ui-monospace, monospace;
+  font-size: var(--poster-name-fz);
+  color: var(--poster-name-color);
+  line-height: 1;
+}
+.poster .caption{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 2;
+}
+.poster.mode-image .caption{
+  position: absolute;
+  top: calc(50% - var(--cap-offset-y, 100px));
+  left: calc(50% - var(--cap-offset-x, 100px));
+  text-align: left;
+}
+.poster.mode-grid .caption{
+  position: static;
+  align-self: center;
+  text-align: center;
+  margin-top: 4px;
+}
+.poster.mode-scatter .caption{
+  position: absolute;
+  top: calc(50% - var(--cap-offset-y, 100px));
+  left: calc(50% - var(--cap-offset-x, 100px));
+  text-align: left;
+}
+.poster.mode-scatter .inner{ position: relative; }
+.poster .caption .cap-nm{ display: block; }
+.poster .caption .cap-dex{ display: block; opacity: .6; }
+
+
+/* ╔══════════════════════════════════╗
+   ║  12. CARDS GRID                  ║
+   ╚══════════════════════════════════╝ */
+.cards .inner{
+  padding: var(--pad-cards);
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.grid{
+  width: 100%; height: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--card-cols), var(--card-w));
+  grid-template-rows: repeat(var(--card-rows), var(--card-h));
+  gap: var(--card-gap);
+  justify-content: center;
+  align-content: center;
+}
+.grid.neg-gap{
+  gap: 0;
+  column-gap: calc(var(--card-gap-abs) * -1);
+  row-gap: calc(var(--card-gap-abs) * -1);
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  13. CARD COMPONENT              ║
+   ╚══════════════════════════════════╝ */
+
+/* --- Card shell --- */
+.card{
+  width: var(--card-w);
+  height: var(--card-h);
+  background: var(--card-box-bg);
+  color: var(--card-box-ink);
+  border-radius: 24px;
+  border: 1px solid rgba(0,0,0,0.10);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.placeholder{ visibility: hidden; }
+
+/* --- Head (name + number + type icon) --- */
+.head{
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: calc(var(--card-pad) * 1.5) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.3);
+  border: none;
+  font-family: "VT323", ui-monospace, monospace;
+  line-height: 1;
+}
+.head .line{
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.head .bold{
+  font-weight: 900;
+  font-size: 34px;
+  letter-spacing: .8px;
+  line-height: 1.05;
+}
+.head .num{
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+  opacity: .7;
+}
+.head .right{
+  margin-left: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-width: 56px;
+}
+
+/* --- Core (main sprite) --- */
+.core{
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sprite-wrap{
+  position: relative;
+  width: var(--img);
+  height: var(--img);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translateY(var(--sprite-shift-y));
+}
+img.poke{
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+}
+img.poke.pixel{
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* --- Evolution strip --- */
+.evo-strip{
+  margin-top: calc(var(--card-pad) * -1.2);
+  padding: 0 calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: none;
+  flex: 0 0 auto;
+}
+.mini-wrap{
+  width: calc(var(--mini) * var(--evo-box-scale));
+  height: calc(var(--mini) * var(--evo-box-scale));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--evo-box-bg) calc(var(--evo-box-on) * 100%), transparent);
+  border: 1px solid color-mix(in srgb, var(--evo-box-border) calc(var(--evo-box-on) * 100%), transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mini-wrap.current{
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.10);
+}
+img.mini{
+  width: calc(var(--mini) * 0.82);
+  height: calc(var(--mini) * 0.82);
+  object-fit: contain;
+  display: block;
+}
+.arrow{
+  width: 30px; height: 2px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 99px;
+  position: relative;
+  opacity: .35;
+}
+.arrow::after{
+  content: "";
+  position: absolute;
+  right: -2px; top: 50%;
+  width: 6px; height: 6px;
+  transform: translateY(-50%) rotate(45deg);
+  border-right: 2px solid rgba(0,0,0,0.35);
+  border-top: 2px solid rgba(0,0,0,0.35);
+}
+
+/* --- Info (ability, region, description) --- */
+.info{
+  padding: calc(var(--card-pad) * 0.4) calc(var(--card-pad) * 2.2) calc(var(--card-pad) * 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 0 auto;
+  overflow: hidden;
+}
+.meta{
+  color: rgba(0,0,0,0.72);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.meta b{
+  color: rgba(0,0,0,0.88);
+  font-size: var(--meta-label-fz);
+  font-family: "VT323", ui-monospace, monospace;
+}
+.meta .meta-val{ font-size: var(--meta-label-fz); font-family: "VT323", ui-monospace, monospace; }
+.desc{
+  display: block;
+  line-height: 1.3;
+  color: rgba(0,0,0,0.72);
+  overflow: hidden;
+  font-family: "VT323", ui-monospace, monospace;
+  font-size: var(--desc-fz);
+  flex: 1 1 auto;
+}
+
+/* --- Type icon badge --- */
+.type-badge{ display: flex; align-items: flex-start; justify-content: flex-end; }
+.type-icon-wrap{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.type-icon-wrap svg{
+  width: 76px; height: 76px;
+  display: block;
+}
+.type-icon-fallback{
+  width: 76px; height: 76px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-family: "VT323", ui-monospace, monospace;
+  font-size: 38px;
+}
+.type-name-tag{
+  font-family: "VT323", ui-monospace, monospace;
+  font-size: 22px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+/* --- Ability pills --- */
+.ab-list{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ab-tag{
+  background: rgba(0,0,0,0.07);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: var(--meta-value-fz);
+  font-family: "VT323", ui-monospace, monospace;
+  line-height: 1.4;
+}
+.ab-tag.ab-hidden{
+  opacity: 0.5;
+  font-style: italic;
+}
+
+
+/* ╔══════════════════════════════════╗
+   ║  14. CARD TYPOGRAPHY             ║
+   ╚══════════════════════════════════╝ */
+
+/* Auto mode: scales with card height */
+.card[data-text="auto"]{
+  --auto-name: clamp(26px, calc(var(--card-h) * 0.050), 72px);
+  --auto-num:  clamp(20px, calc(var(--card-h) * 0.038), 52px);
+  --auto-meta: clamp(14px, calc(var(--card-h) * 0.024), 34px);
+  --auto-desc: clamp(12px, calc(var(--card-h) * 0.020), 28px);
+}
+.card[data-text="auto"] .head{ font-size: var(--auto-name); }
+.card[data-text="auto"] .head .bold{ font-size: var(--auto-name); }
+.card[data-text="auto"] .head .num{ font-size: var(--auto-num); }
+.card[data-text="auto"] .meta{ font-size: var(--auto-meta); }
+.card[data-text="auto"] .desc{ font-size: var(--auto-desc); }
+
+/* Manual mode: user-controlled px values */
+.card[data-text="manual"] .head{ font-size: var(--head-fz); }
+.card[data-text="manual"] .head .bold{ font-size: var(--head-fz); }
+.card[data-text="manual"] .head .num{ font-size: calc(var(--head-fz) * 0.58); }
+.card[data-text="manual"] .meta{ font-size: var(--meta-fz); }
+.card[data-text="manual"] .desc{ font-size: var(--desc-fz); }
+
+
+/* ╔══════════════════════════════════╗
+   ║  15. PRINT & EXPORT              ║
+   ╚══════════════════════════════════╝ */
+body[data-exporting="1"] .stage{ transform: none !important; }
+
+@media print{
+  @page{ size: A4; margin: 5mm; }
+  html, body{ margin: 0; padding: 0; background: #fff; }
+  .sidebar, .loading{ display: none !important; }
+  .stage-wrap{ padding: 0 !important; }
+  .stage{ transform: none !important; }
+  #root{ gap: 0 !important; }
+  .page{
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: var(--page-w) !important;
+    height: var(--page-h) !important;
+    zoom: 0.30;
+    margin: 0 !important;
+    page-break-after: always;
+    break-after: page;
+    break-inside: avoid;
+  }
+  *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+</style>
+</head>
+
+<body data-mode="cards">
+
+<!-- ══════ LOADING INDICATOR ══════ -->
+<div id="loadingIndicator" class="loading">
+  <div class="spinner"></div>
+  <span>Building...</span>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+
+    <!-- ══════ SIDEBAR HEADER + TABS ══════ -->
+    <div class="sidebar-header">
+      <h1>Pokédex Builder</h1>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="poster">Poster</button>
+      <button class="tab" data-mode="cards">Cards</button>
+    </div>
+
+    <!-- ══════ DATASET & LOOK ══════ -->
+    <details class="section" open>
+      <summary>Dataset & Look</summary>
+      <div class="section-body">
+        <div class="row">
+          <label>Generation
+            <select id="gen">
+              <option value="1" selected>Gen 1 — Kanto</option>
+              <option value="2">Gen 2 — Johto</option>
+              <option value="3">Gen 3 — Hoenn</option>
+              <option value="4">Gen 4 — Sinnoh</option>
+              <option value="5">Gen 5 — Unova</option>
+              <option value="6">Gen 6 — Kalos</option>
+              <option value="7">Gen 7 — Alola</option>
+              <option value="8">Gen 8 — Galar</option>
+              <option value="9">Gen 9 — Paldea</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+          <label>Art style
+            <select id="style">
+              <option value="pixel" selected>Pixel (96px)</option>
+              <option value="home">HD (HOME)</option>
+              <option value="art">Official art</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Pixel scale
+            <select id="pxScale"><option value="auto" selected>Auto</option></select>
+          </label>
+
+        </div>
+        <div class="row" style="align-items:center">
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="snapInt" type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </div>
+            Snap to integer pixels
+          </label>
+        </div>
+        <div class="row">
+          <label style="width:100%">UI Zoom
+            <input id="zoom" type="range" min="0.35" max="1" step="0.01" value=".55">
+          </label>
+        </div>
+        <div class="row">
+          <label style="width:100%">Custom IDs (optional)
+            <textarea id="specificIds" placeholder="e.g. 4,5,6,25,39,150 — overrides Generation"></textarea>
+          </label>
+          <button id="randomIdsBtn" title="Pick N random Pokémon" style="align-self:flex-end;margin-bottom:2px">🎲 Random</button>
+          <button id="cleanBtn" title="Reset to default" style="align-self:flex-end;margin-bottom:2px">✕ Clean</button>
+        </div>
+        <div class="row" style="flex-wrap:wrap;gap:6px;align-items:center">
+          <span style="font-size:12px;color:var(--muted);min-width:80px">Type filter</span>
+          <div id="typeFilter" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+          <button id="clearTypesBtn" style="font-size:11px;padding:2px 8px;margin-left:4px">Clear</button>
+        </div>
+        <div class="row" style="gap:8px;align-items:center">
+          <button id="addAllTypeBtn" style="font-size:11px;padding:3px 10px">Add all selected types</button>
+          <label style="flex-direction:row;gap:6px;align-items:center;font-size:12px">
+            Sort by
+            <select id="sortBy" style="font-size:12px;padding:2px 4px">
+              <option value="number">Number</option>
+              <option value="type">Type</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" id="typeOrderRow" style="display:none;flex-direction:column;gap:6px">
+          <span style="font-size:11px;color:var(--muted)">Drag to set type order</span>
+          <div id="typeOrderList" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- ══════ POSTER SETTINGS ══════ -->
+    <details class="section" id="posterPanel">
+      <summary>Poster Settings</summary>
+      <div class="section-body">
+        <div class="row">
+          <label>Mode
+            <select id="posterMode">
+              <option value="image" selected>Image</option>
+              <option value="grid">Grid</option>
+              <option value="scatter">Scatter</option>
+            </select>
+          </label>
+          <label>Font
+            <select id="posterFont">
+              <option value="VT323" selected>VT323 (pixel)</option>
+              <option value="Bebas Neue">Bebas Neue</option>
+            </select>
+          </label>
+          <label style="align-self:center"><input id="posterBestFit" type="checkbox" checked> Best fit</label>
+          <div id="posterGridSizeWrap" style="display:none; gap:8px">
+            <label>Cols <input id="posterCols" type="number" value="9" min="1" max="20"></label>
+            <label>Rows <input id="posterRows" type="number" value="13" min="1" max="60"></label>
+          </div>
+          <label>Gap X px <input id="posterGapX" type="number" value="-20" min="-5000" max="200" step="1"></label>
+          <label>Gap Y px <input id="posterGapY" type="number" value="-20" min="-5000" max="200" step="1"></label>
+          <label>Padding <input id="posterPad" type="number" value="10" min="0" max="500"></label>
+        </div>
+        <div class="row">
+          <label>Caption size <input id="capPx" type="number" value="18" min="10" max="60"></label>
+          <label>Caption color <input id="capColor" type="color" value="#111111"></label>
+          <label id="capOffsetXRow">Offset X <input id="capOffsetX" type="number" value="100" min="-400" max="400" step="1"></label>
+          <label id="capOffsetYRow">Offset Y <input id="capOffsetY" type="number" value="100" min="-400" max="400" step="1"></label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterShowCaption" type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </div>
+            Show names
+          </label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterShowTitle" type="checkbox" checked>
+              <div class="toggle-track"></div>
+            </div>
+            Show title
+          </label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterBlueNoise" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Blue noise
+          </label>
+        </div>
+        <div class="row" id="posterCustomTitleRow">
+          <label style="flex:1">Custom title (shown when using Custom IDs)
+            <input id="posterCustomTitle" type="text" placeholder="MY COLLECTION" style="width:100%;font-family:'VT323',monospace;font-size:18px">
+          </label>
+        </div>
+        <div class="row" style="align-items:center;gap:12px">
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterImagePreset" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Image preset
+          </label>
+        </div>
+      </div>
+    </details>
+
+    <!-- ══════ CARDS: GRID ══════ -->
+    <details class="section" id="cardsPanel" open>
+      <summary>Cards Grid (3×3)</summary>
+      <div class="section-body">
+        <input id="cardCols" type="hidden" value="3">
+        <input id="cardRows" type="hidden" value="3">
+        <div class="row">
+          <label>Gap <input id="cardGap" type="number" value="12" min="-60" max="120"></label>
+          <label>Padding <input id="cardsPad" type="number" value="0" min="0" max="200"></label>
+        </div>
+      </div>
+    </details>
+
+    <!-- ══════ CARDS: PAGING ══════ -->
+    <details class="section" id="pagingPanel">
+      <summary>Paging</summary>
+      <div class="section-body">
+        <div class="row">
+          <label>Mode
+            <select id="cardsPaging">
+              <option value="sequence" selected>Sequence</option>
+              <option value="evolution">Evolution chains</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" id="evoBatchRow" style="display:none">
+          <label>Start chain # <input id="chainStart" type="number" min="1" value="1"></label>
+          <label>Chains to generate <input id="chainCount" type="number" min="1" max="999" value="10"></label>
+        </div>
+        <small id="pagingHint">Fills pages in Pokédex order.</small>
+      </div>
+    </details>
+
+    <!-- ══════ CARDS: LAYOUT ══════ -->
+    <details class="section" id="layoutPanel">
+      <summary>Card Layout</summary>
+      <div class="section-body">
+        <div class="row">
+          <label>Card padding <input id="cardPad" type="number" value="40" min="0" max="120"></label>
+          <label>Sprite Y offset <input id="spriteY" type="number" value="0" min="-600" max="600"></label>
+          <label>Evo sprite size <input id="miniSize" type="number" value="150" min="20" max="160"></label>
+        </div>
+        <div class="row" style="align-items:center">
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="evoBoxOn" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Evo box
+          </label>
+          <label>Scale <input id="evoBoxScale" type="number" value="0.6" step="0.05" min="0.2" max="1.2" style="min-width:70px"></label>
+          <label>Box color <input id="evoBoxColor" type="color" value="#f2f2f2"></label>
+          <label>Border <input id="evoBorderColor" type="color" value="#d0d0d0"></label>
+        </div>
+        <div class="row">
+          <label>Highlight fill <input id="evoFill" type="color" value="#eceff3"></label>
+          <label>Highlight stroke <input id="evoStroke" type="color" value="#fb923c"></label>
+        </div>
+      </div>
+    </details>
+
+    <!-- ══════ CARDS: TYPOGRAPHY ══════ -->
+    <details class="section" id="typoPanel">
+      <summary>Typography</summary>
+      <div class="section-body">
+        <div class="row">
+          <label>Text mode
+            <select id="textMode">
+              <option value="auto" selected>Auto (scales with card)</option>
+              <option value="manual">Manual (px)</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" id="manualTextRow" style="display:none">
+          <label>Name px <input id="cHead" type="number" value="68" min="10" max="120"></label>
+          <label>Meta px <input id="cMeta" type="number" value="32" min="10" max="60"></label>
+          <label>Desc px <input id="cDesc" type="number" value="36" min="10" max="50"></label>
+          <label>Meta gap <input id="metaGap" type="number" value="12" min="0" max="60"></label>
+        </div>
+        <div class="row" id="manualTextRow2" style="display:none">
+          <label>Label size <input id="metaLabelSize" type="number" value="36" min="10" max="60"></label>
+          <label>Value size <input id="metaValueSize" type="number" value="22" min="10" max="60"></label>
+        </div>
+        <div class="row">
+          <label>Card bg <input id="cardBoxBg" type="color" value="#ffffff"></label>
+          <label>Card text <input id="cardBoxInk" type="color" value="#000000"></label>
+        </div>
+      </div>
+    </details>
+
+    <!-- ══════ ACTION BUTTONS ══════ -->
+    <div class="actions">
+      <button class="btn" id="buildBtn">Build</button>
+      <button class="btn primary" id="printBtn">Print / PDF</button>
+      <button class="btn" id="downloadBtn">Download PNG</button>
+    </div>
+    <small>After building, use the print dialog to select specific pages.</small>
+
+  </aside>
+
+  <!-- ══════ STAGE (preview area) ══════ -->
+  <main class="stage-wrap">
+    <div class="stage">
+      <div id="root"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+
+// ╔══════════════════════════════════╗
+// ║  1. UTILITIES                    ║
+// ╚══════════════════════════════════╝
+const el = id => document.getElementById(id);
+const v  = id => el(id).value;
+const setVar = (k, val) => document.documentElement.style.setProperty(k, val);
+
+
+// ╔══════════════════════════════════╗
+// ║  2. API CACHE                    ║
+// ╚══════════════════════════════════╝
+const apiCache = new Map();
+async function cachedFetch(url){
+  if(apiCache.has(url)) return apiCache.get(url);
+  const r = await fetch(url);
+  const j = await r.json();
+  apiCache.set(url, j);
+  return j;
+}
+async function fetchTypeIcon(t){
+  const key = 'svg:'+t;
+  if(apiCache.has(key)) return apiCache.get(key);
+  try{
+    const r = await fetch(`https://cdn.jsdelivr.net/gh/partywhale/pokemon-type-icons@main/icons/${t}.svg`);
+    if(!r.ok) return null;
+    const txt = await r.text();
+    apiCache.set(key, txt);
+    return txt;
+  }catch{ return null; }
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  3. LOADING / DEBOUNCE           ║
+// ╚══════════════════════════════════╝
+const loader = el('loadingIndicator');
+let buildCount = 0;
+function showLoading(){ buildCount++; loader.classList.add('show'); }
+function hideLoading(){ buildCount--; if(buildCount<=0){ buildCount=0; loader.classList.remove('show'); } }
+
+let buildTimer = null;
+function debouncedBuild(){
+  clearTimeout(buildTimer);
+  buildTimer = setTimeout(build, 300);
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  4. TABS & UI SYNC               ║
+// ╚══════════════════════════════════╝
+
+// Pixel scale options
+(() => {
+  const s = el('pxScale');
+  for(let i=1; i<=30; i++){
+    const o = document.createElement('option');
+    o.value = i; o.textContent = i+'x';
+    s.appendChild(o);
+  }
+})();
+
+// Mode tabs
+const MODE = {
+  get: () => document.body.dataset.mode || 'poster',
+  set: m => {
+    document.body.dataset.mode = m;
+    document.querySelectorAll('.tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.mode === m)
+    );
+    el('posterPanel').style.display = (m==='poster') ? '' : 'none';
+    ['cardsPanel','pagingPanel','layoutPanel','typoPanel'].forEach(id => {
+      el(id).style.display = (m==='cards') ? '' : 'none';
+    });
+    build();
+  }
+};
+document.querySelectorAll('.tab').forEach(b =>
+  b.addEventListener('click', () => MODE.set(b.dataset.mode))
+);
+
+// Paging toggle
+function syncCardsPagingUI(){
+  const evo = v('cardsPaging') === 'evolution';
+  el('evoBatchRow').style.display = evo ? 'flex' : 'none';
+  el('pagingHint').textContent = evo
+    ? 'One evolution chain per page. Use Start/Count to batch.'
+    : 'Fills pages in Pokédex order.';
+}
+function syncTextModeUI(){
+  const manual = v('textMode') === 'manual';
+  el('manualTextRow').style.display = manual ? 'flex' : 'none';
+  el('manualTextRow2').style.display = manual ? 'flex' : 'none';
+}
+el('cardsPaging').addEventListener('input', () => { syncCardsPagingUI(); build(); });
+el('textMode').addEventListener('input', () => { syncTextModeUI(); build(); });
+syncCardsPagingUI();
+syncTextModeUI();
+
+
+// ╔══════════════════════════════════╗
+// ║  5. DATA HELPERS                  ║
+// ╚══════════════════════════════════╝
+
+const GEN_REGIONS = {
+  1:'KANTO', 2:'JOHTO', 3:'HOENN', 4:'SINNOH', 5:'UNOVA',
+  6:'KALOS', 7:'ALOLA', 8:'GALAR', 9:'PALDEA', all:'ALL REGIONS'
+};
+const GEN_DESC = {
+  1:  'The original region',
+  2:  'Land of tradition',
+  3:  'The tropical region',
+  4:  'Land of myth',
+  5:  'The metropolitan region',
+  6:  'The beautiful region',
+  7:  'Island paradise',
+  8:  'The industrial region',
+  9:  'Land of adventure',
+  all:'All regions combined',
+};
+const API_GEN_TO_REGION = {
+  'generation-i':'KANTO','generation-ii':'JOHTO','generation-iii':'HOENN',
+  'generation-iv':'SINNOH','generation-v':'UNOVA','generation-vi':'KALOS',
+  'generation-vii':'ALOLA','generation-viii':'GALAR','generation-ix':'PALDEA'
+};
+const GEN_ID_RANGES = {
+  1:[1,151],2:[152,251],3:[252,386],4:[387,493],5:[494,649],
+  6:[650,721],7:[722,809],8:[810,905],9:[906,1010],all:[1,1010]
+};
+const TYPE_ORDER = ['normal','fire','water','electric','grass','ice','fighting','poison',
+  'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+function getTypeOrder(){
+  const pills = document.querySelectorAll('#typeOrderList .type-pill');
+  return pills.length ? [...pills].map(p => p.dataset.type) : TYPE_ORDER;
+}
+const typeIdx = t => { const i = getTypeOrder().indexOf(t); return i >= 0 ? i : 99; };
+
+// Build type filter pill buttons
+(function initTypeFilter(){
+  const types = ['normal','fire','water','electric','grass','ice','fighting','poison',
+    'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+  const container = el('typeFilter');
+  for(const t of types){
+    const pill = document.createElement('span');
+    pill.className = 'type-pill';
+    pill.textContent = t;
+    pill.dataset.type = t;
+    pill.style.background = typeColor(t);
+    pill.addEventListener('click', () => {
+      pill.classList.toggle('active');
+      debouncedBuild();
+    });
+    container.appendChild(pill);
+  }
+})();
+el('clearTypesBtn').addEventListener('click', () => {
+  document.querySelectorAll('#typeFilter .type-pill.active').forEach(p => p.classList.remove('active'));
+  debouncedBuild();
+});
+
+el('addAllTypeBtn').addEventListener('click', async () => {
+  const selectedTypes = [...document.querySelectorAll('#typeFilter .type-pill.active')].map(p => p.dataset.type);
+  if(!selectedTypes.length) return;
+  const typeData = await Promise.all(selectedTypes.map(t => cachedFetch(`https://pokeapi.co/api/v2/type/${t}/`)));
+  const ids = new Set();
+  for(const td of typeData){
+    for(const p of td.pokemon){
+      const pid = +p.pokemon.url.split('/').slice(-2,-1)[0];
+      if(pid >= 1 && pid <= 1010) ids.add(pid);
+    }
+  }
+  el('specificIds').value = [...ids].sort((a,b) => a-b).join(', ');
+  debouncedBuild();
+});
+
+// Draggable type order list
+(function initTypeOrder(){
+  const container = el('typeOrderList');
+  TYPE_ORDER.forEach(t => {
+    const pill = document.createElement('span');
+    pill.className = 'type-pill';
+    pill.textContent = t;
+    pill.dataset.type = t;
+    pill.style.background = typeColor(t);
+    pill.draggable = true;
+    container.appendChild(pill);
+  });
+
+  let dragSrc = null;
+
+  container.addEventListener('dragstart', e => {
+    dragSrc = e.target.closest('.type-pill');
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => dragSrc && dragSrc.classList.add('active'), 0);
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const target = e.target.closest('.type-pill');
+    if(!target || target === dragSrc) return;
+    // Remove drag-over from all
+    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+    // Live reorder: insert before or after based on cursor position
+    const rect = target.getBoundingClientRect();
+    const after = e.clientX > rect.left + rect.width / 2;
+    container.insertBefore(dragSrc, after ? target.nextSibling : target);
+  });
+
+  container.addEventListener('dragend', () => {
+    if(dragSrc) dragSrc.classList.remove('active');
+    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    dragSrc = null;
+    debouncedBuild();
+  });
+})();
+
+function syncSortUI(){
+  el('typeOrderRow').style.display = v('sortBy') === 'type' ? '' : 'none';
+}
+el('sortBy').addEventListener('change', syncSortUI);
+syncSortUI();
+
+function titleName(n){ return n.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
+
+async function genSpecies(gen){
+  const j = await cachedFetch(`https://pokeapi.co/api/v2/generation/${gen}/`);
+  return j.pokemon_species
+    .map(s => ({ id: +s.url.split('/').slice(-2,-1)[0], name: titleName(s.name) }))
+    .sort((a,b) => a.id - b.id);
+}
+async function allSpecies(){
+  const a = await Promise.all([1,2,3,4,5,6,7,8,9].map(genSpecies));
+  return a.flat();
+}
+async function speciesById(id){
+  const j = await cachedFetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
+  return {
+    id: +id,
+    name: titleName(j.name),
+    chain: j.evolution_chain?.url,
+    generation: j.generation?.name,
+    _raw: j
+  };
+}
+async function pokemonData(id){
+  const j = await cachedFetch(`https://pokeapi.co/api/v2/pokemon/${id}/`);
+  return {
+    types: j.types.map(t => t.type.name),
+    abilities: j.abilities.sort((a,b) => a.slot - b.slot)
+      .map(a => ({ name: titleName(a.ability.name), hidden: a.is_hidden }))
+  };
+}
+function flavorFromRaw(raw, lang){
+  const pref = (lang==='pt') ? ['pt-BR','pt','en'] : ['en'];
+  const entries = [...(raw.flavor_text_entries||[])].reverse(); // newest game versions first
+  for(const L of pref){
+    const hit = entries.find(ft => ft.language?.name === L);
+    if(hit) return hit.flavor_text.replace(/\f|\n/g,' ').replace(/\s+/g,' ').trim();
+  }
+  return '';
+}
+function localName(raw, lang){
+  const pref = (lang==='pt') ? ['pt-BR','pt','en'] : ['en'];
+  for(const L of pref){
+    const hit = (raw.names||[]).find(n => n.language?.name === L);
+    if(hit) return titleName(hit.name);
+  }
+  return titleName(raw.name);
+}
+async function evoLine(url){
+  if(!url) return [];
+  const j = await cachedFetch(url).catch(() => null);
+  if(!j) return [];
+  const out = [];
+  (function walk(n){
+    out.push(+n.species.url.split('/').slice(-2,-1)[0]);
+    (n.evolves_to||[]).forEach(walk);
+  })(j.chain);
+  return [...new Set(out)];
+}
+async function preloadImages(root){
+  const imgs = [...root.querySelectorAll('img')];
+  await Promise.all(imgs.map(i => i.decode().catch(()=>{})));
+}
+async function readyFonts(){ try{ await document.fonts.ready; }catch{} }
+
+function parseIds(text){
+  return [...new Set(
+    (text||'').split(/[\s,;]+/)
+      .map(s => parseInt(String(s).replace(/\D/g,''), 10))
+      .filter(n => Number.isFinite(n) && n > 0)
+  )];
+}
+async function resolveListFromIds(ids){
+  return Promise.all(ids.map(async id => {
+    try{
+      const sp = await speciesById(id);
+      return { id: sp.id, name: sp.name, chain: sp.chain, generation: sp.generation };
+    } catch {
+      return { id: +id, name: '#'+id, chain: null, generation: null };
+    }
+  }));
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  6. ASSETS                        ║
+// ╚══════════════════════════════════╝
+function artURL(id, style){
+  if(style === 'pixel') return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+  if(style === 'home')  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+}
+function spriteWrap(url, style){
+  const wrap = document.createElement('div'); wrap.className = 'sprite-wrap';
+  const img = document.createElement('img');
+  img.className = 'poke' + (style==='pixel' ? ' pixel' : '');
+  img.crossOrigin = 'anonymous';
+  img.decoding = 'async';
+  img.src = url;
+  wrap.appendChild(img);
+  return wrap;
+}
+function typeColor(t){
+  return ({
+    normal:'#A8A77A',fire:'#EE8130',water:'#6390F0',electric:'#F7D02C',grass:'#7AC74C',ice:'#96D9D6',
+    fighting:'#C22E28',poison:'#A33EA1',ground:'#E2BF65',flying:'#A98FF3',psychic:'#F95587',bug:'#A6B91A',
+    rock:'#B6A136',ghost:'#735797',dragon:'#6F35FC',dark:'#705746',steel:'#B7B7CE',fairy:'#D685AD'
+  })[t] || '#777';
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  7. LAYOUT MATH                   ║
+// ╚══════════════════════════════════╝
+function cardDims(cols, rows, pad, gap){
+  const W = 2480-2*pad, H = 3508-2*pad, g = Math.max(gap, 0);
+  const w = (W - g*(cols-1)) / cols;
+  const h = (H - g*(rows-1)) / rows;
+  return { w: Math.floor(w), h: Math.floor(h) };
+}
+function spriteSize(w, h, style){
+  if(style !== 'pixel') return Math.floor(Math.min(w * 0.95, h * 0.75));
+  const base = 96;
+  let k;
+  if(v('pxScale') === 'auto'){
+    k = Math.min(w,h) / base;
+    k = el('snapInt').checked ? Math.floor(k) : Math.round(k);
+  } else {
+    k = parseInt(v('pxScale'), 10);
+  }
+  return base * Math.max(1, k);
+}
+
+// Poster-specific sprite size: fills cell minus caption height, respects pxScale for pixel art
+function posterImgSize(cellW, cellH, style){
+  const showCap = el('posterShowCaption').checked;
+  const isGrid  = (v('posterMode') || 'image') === 'grid';
+  const captionH = (showCap && isGrid) ? parseInt(v('capPx')) + 4 : 0;
+  const avail = Math.min(cellW, cellH - captionH);
+  if(style !== 'pixel') return Math.floor(avail);
+  const base = 96;
+  if(v('pxScale') === 'auto'){
+    const k = el('snapInt').checked ? Math.floor(avail/base) : Math.round(avail/base);
+    return base * Math.max(1, k);
+  }
+  const desired = base * Math.max(1, parseInt(v('pxScale'), 10));
+  return desired <= avail ? desired : base * Math.max(1, Math.floor(avail/base));
+}
+function bestFitLayout(n, pad, titleH, capPx, style, showCaption=true, overlapX=0, overlapY=0){
+  const W = 2480 - 2*pad;
+  const H = 3508 - 2*pad - titleH;
+  const captionH = showCaption ? capPx + 4 : 0;
+  let bestSize = 0, bestCols = 1, bestRows = n;
+  for(let cols = 1; cols <= n; cols++){
+    const rows = Math.ceil(n / cols);
+    const cellW = W / cols;
+    const cellH = H / rows;
+    const avail = Math.min(cellW + overlapX, cellH - captionH + overlapY);
+    if(avail <= 0) continue;
+    const size = (style === 'pixel')
+      ? 96 * Math.max(1, Math.floor(avail / 96))
+      : Math.floor(avail);
+    if(size > bestSize){ bestSize = size; bestCols = cols; bestRows = rows; }
+  }
+  return { cols: bestCols, rows: bestRows };
+}
+
+function chunk(arr, size){
+  const out = [];
+  for(let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
+  return out;
+}
+async function buildChainsFromList(list){
+  const chainMap = new Map();
+  for(const item of list){
+    const sp = item.chain ? item : await speciesById(item.id);
+    if(!sp.chain){
+      chainMap.set('nochain:'+sp.id, { ids: [sp.id] });
+      continue;
+    }
+    if(!chainMap.has(sp.chain)){
+      const ids = await evoLine(sp.chain).catch(() => [sp.id]);
+      chainMap.set(sp.chain, { ids: ids.sort((a,b) => a-b) });
+    }
+  }
+  return [...chainMap.values()].sort((a,b) => (a.ids[0]||99999) - (b.ids[0]||99999));
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  8. RENDER: POSTER                ║
+// ╚══════════════════════════════════╝
+
+// Mitchell's best-candidate blue noise shuffle for 2D grids
+function blueNoiseShuffle(list, cols, rows) {
+  const n = list.length;
+  if(n < 2) return [...list];
+  const actualRows = rows || Math.ceil(n / cols);
+  const cw = 2480 / cols;            // cell width in actual page pixels
+  const ch = 3508 / actualRows;      // cell height in actual page pixels
+  const px = i => (i % cols) * cw;
+  const py = i => Math.floor(i / cols) * ch;
+  const d2 = (a, b) => { const dx = px(a)-px(b), dy = py(a)-py(b); return dx*dx+dy*dy; };
+
+  const avail = [...Array(n).keys()];
+  const order = [avail.splice(Math.floor(Math.random()*n), 1)[0]];
+  while(avail.length) {
+    const k = Math.min(avail.length, 30);
+    let best = -1, bestD = -1;
+    for(let t = 0; t < k; t++){
+      const ri = Math.floor(Math.random() * avail.length);
+      const cand = avail[ri];
+      let minD = Infinity;
+      for(const p of order) minD = Math.min(minD, d2(cand, p));
+      if(minD > bestD){ bestD = minD; best = ri; }
+    }
+    order.push(avail.splice(best, 1)[0]);
+  }
+  // order[i] = grid position where list[i] goes
+  const result = new Array(n);
+  for(let i = 0; i < n; i++) result[order[i]] = list[i];
+  return result;
+}
+
+// Blue-noise continuous scatter positions within page bounds
+function scatterPositions(n, spriteSize, pad, titleH) {
+  const minX = pad, maxX = 2480 - pad - spriteSize;
+  const minY = pad, maxY = 3508 - pad - titleH - spriteSize;
+  const randPos = () => [minX + Math.random() * (maxX - minX), minY + Math.random() * (maxY - minY)];
+  const d2 = (a, b) => { const dx = a[0]-b[0], dy = a[1]-b[1]; return dx*dx+dy*dy; };
+  const positions = [randPos()];
+  while(positions.length < n){
+    let best = null, bestD = -1;
+    for(let t = 0; t < 40; t++){
+      const cand = randPos();
+      let minD = Infinity;
+      for(const p of positions) minD = Math.min(minD, d2(cand, p));
+      if(minD > bestD){ bestD = minD; best = cand; }
+    }
+    positions.push(best);
+  }
+  return positions;
+}
+
+async function renderPoster(list){
+  let cols = +v('posterCols'), rows = +v('posterRows');
+  const gapX = +v('posterGapX'), gapY = +v('posterGapY'), pad = +v('posterPad');
+  const style = v('style');
+
+  setVar('--pad-poster', pad+'px');
+  if(gapY >= 0){ setVar('--poster-row-gap', gapY+'px'); setVar('--poster-neg-row','0px'); }
+  else { setVar('--poster-row-gap','0px'); setVar('--poster-neg-row', Math.abs(gapY)+'px'); }
+  if(gapX >= 0){ setVar('--poster-col-gap', gapX+'px'); setVar('--poster-neg-col','0px'); }
+  else { setVar('--poster-col-gap','0px'); setVar('--poster-neg-col', Math.abs(gapX)+'px'); }
+
+  setVar('--poster-name-fz', v('capPx')+'px');
+  setVar('--poster-name-color', v('capColor'));
+  setVar('--cap-offset-y', v('capOffsetY')+'px');
+  setVar('--cap-offset-x', v('capOffsetX')+'px');
+  setVar('--poster-title-font', `"${v('posterFont') || 'VT323'}"`);
+
+  const showCaption = el('posterShowCaption').checked;
+  const showTitle   = el('posterShowTitle').checked;
+  const posterMode  = v('posterMode') || 'image';
+  const blueNoise   = el('posterBlueNoise').checked;
+
+  // Detect multi-region: custom IDs spanning >1 generation, or gen=all
+  const gen = v('gen');
+  const gens = new Set(list.map(x => x.generation).filter(Boolean));
+  const multiRegion = gens.size > 1 || (gen === 'all' && !parseIds(el('specificIds').value).length);
+
+  // Title height: 0 when hidden (saves space for grid)
+  const capPx  = parseInt(v('capPx'));
+  const titleH = (!multiRegion && showTitle) ? 100 : 0;
+  const overlapX = gapX < 0 ? Math.abs(gapX) : 0;
+  const overlapY = gapY < 0 ? Math.abs(gapY) : 0;
+
+  if(el('posterBestFit').checked && list.length){
+    const captionInFlow = el('posterShowCaption').checked && posterMode === 'grid';
+    ({ cols, rows } = bestFitLayout(list.length, pad, titleH, capPx, style,
+      captionInFlow, overlapX, overlapY));
+  }
+  setVar('--poster-cols', cols);
+  setVar('--poster-rows', rows);
+
+  const cellW  = (2480 - 2*pad) / cols;
+  const cellH  = (3508 - 2*pad - titleH) / rows;
+  const spriteSize = Math.max(10, Math.floor(posterImgSize(cellW + overlapX, cellH + overlapY, style)));
+  setVar('--img', spriteSize + 'px');
+
+  const root = el('root');
+  root.innerHTML = '';
+
+  // Title data — custom title overrides gen title when typed, even without custom IDs
+  const customTitle = v('posterCustomTitle').trim().toUpperCase();
+  const isCustomList = parseIds(el('specificIds').value).length > 0 || !!customTitle;
+  const region   = GEN_REGIONS[gen] || 'REGION';
+  const genLabel = (gen==='all') ? 'GEN 1–9' : ('GEN ' + gen);
+  const regionDesc = GEN_DESC[gen] || '';
+
+  // Apply blue noise shuffle before chunking
+  const orderedList = blueNoise ? blueNoiseShuffle(list, cols, rows) : list;
+
+  // Chunk list into pages
+  const pageSize = cols * rows;
+  const chunks = [];
+  for(let i = 0; i < orderedList.length; i += pageSize) chunks.push(orderedList.slice(i, i + pageSize));
+  if(!chunks.length) chunks.push([]);
+
+  for(let pi = 0; pi < chunks.length; pi++){
+    const page = document.createElement('div'); page.className = `page poster mode-${posterMode}`;
+    const inner = document.createElement('div'); inner.className = 'inner';
+    // Reserve extra bottom space for title so grid never overlaps it
+    if(pi === 0 && showTitle) inner.style.paddingBottom = (pad + titleH) + 'px';
+
+    if(posterMode === 'scatter'){
+      // Scatter: blue-noise continuous positions, no grid
+      inner.style.padding = '0';
+      const scatterTitleH = (pi === 0 && showTitle) ? 100 : 0;
+      const positions = scatterPositions(chunks[pi].length, spriteSize, pad, scatterTitleH);
+      chunks[pi].forEach((pk, ci) => {
+        const [sx, sy] = positions[ci];
+        const cell = document.createElement('div'); cell.className = 'cell';
+        cell.style.cssText = `position:absolute;left:${Math.round(sx)}px;top:${Math.round(sy)}px;width:${spriteSize}px;height:${spriteSize}px;`;
+        cell.appendChild(spriteWrap(artURL(pk.id, style), style));
+        if(showCaption){
+          const cap = document.createElement('div'); cap.className = 'caption';
+          cap.innerHTML = `<span class="cap-nm">${pk.name}</span><span class="cap-dex">#${String(pk.id).padStart(3,'0')}</span>`;
+          cell.appendChild(cap);
+        }
+        inner.appendChild(cell);
+      });
+    } else {
+      // Grid mode (image or grid)
+      const grid = document.createElement('div');
+      grid.className = 'poster-grid';
+
+      chunks[pi].forEach(pk => {
+        const cell = document.createElement('div'); cell.className = 'cell';
+        cell.appendChild(spriteWrap(artURL(pk.id, style), style));
+        if(showCaption){
+          const cap = document.createElement('div'); cap.className = 'caption';
+          cap.innerHTML = `<span class="cap-nm">${pk.name}</span><span class="cap-dex">#${String(pk.id).padStart(3,'0')}</span>`;
+          cell.appendChild(cap);
+        }
+        grid.appendChild(cell);
+      });
+
+      // Center incomplete last row
+      const lastRowCount = chunks[pi].length % cols;
+      if(lastRowCount > 0){
+        const startCol = Math.floor((cols - lastRowCount) / 2) + 1;
+        grid.children[chunks[pi].length - lastRowCount].style.gridColumnStart = startCol;
+      }
+
+      inner.appendChild(grid);
+    }
+
+    page.appendChild(inner);
+
+    // Title: absolute on page, always within page bounds regardless of grid overflow
+    if(pi === 0 && showTitle){
+      const title = document.createElement('div'); title.className = 'poster-title';
+      if(isCustomList){
+        title.innerHTML = `
+          <div class="title-main">
+            <span class="reg-label">${customTitle || 'MY COLLECTION'}</span>
+          </div>`;
+      } else {
+        title.innerHTML = `
+          <div class="title-main">
+            <span class="gen-label">${genLabel}</span>
+            <span class="title-sep">|</span>
+            <span class="reg-label">${region}</span>
+          </div>
+          <div class="title-desc-wrap">${regionDesc}</div>`;
+      }
+      page.appendChild(title);
+    }
+    root.appendChild(page);
+    await preloadImages(page);
+  }
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  9. RENDER: CARD + CARDS          ║
+// ╚══════════════════════════════════╝
+async function renderCard(pkId, style, lang, textMode, showRegion=true){
+  const sp = await speciesById(pkId);
+  const pd = await pokemonData(pkId).catch(() => ({types:[], abilities:[]}));
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.text = textMode;
+
+  // Head
+  const head = document.createElement('div'); head.className = 'head';
+  head.innerHTML = `<div class="line"><div><div class="bold">${localName(sp._raw, lang).toUpperCase()}</div><div class="num">No.${String(pkId).padStart(3,'0')}</div></div><div class="right"></div></div>`;
+
+  // Core
+  const core = document.createElement('div'); core.className = 'core';
+  core.appendChild(spriteWrap(artURL(pkId, style), style));
+
+  // Evo strip
+  const evo = document.createElement('div'); evo.className = 'evo-strip';
+  const chainIds = await evoLine(sp.chain).catch(() => [pkId]);
+  const ids = chainIds.length ? chainIds : [pkId];
+
+  ids.forEach((id, i) => {
+    const w = document.createElement('div');
+    w.className = 'mini-wrap' + (id===pkId ? ' current' : '');
+    const m = document.createElement('img');
+    m.className = 'mini';
+    m.crossOrigin = 'anonymous';
+    m.decoding = 'async';
+    m.src = (style==='pixel')
+      ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+      : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
+    w.appendChild(m);
+    evo.appendChild(w);
+    if(i < ids.length-1){
+      const a = document.createElement('div'); a.className = 'arrow';
+      evo.appendChild(a);
+    }
+  });
+
+  // Info
+  const info = document.createElement('div'); info.className = 'info';
+  const meta = document.createElement('div'); meta.className = 'meta';
+
+  const region = API_GEN_TO_REGION[sp.generation] || 'REGION';
+  const abTags = (pd.abilities||[]).slice(0,4).map(a =>
+    `<span class="ab-tag${a.hidden ? ' ab-hidden' : ''}">${a.name}</span>`
+  ).join('');
+  meta.innerHTML = `<div><div class="ab-list">${abTags || '<span class="ab-tag">\u2014</span>'}</div></div><div><b>Region:</b> <span class="meta-val">${region}</span></div>`;
+
+  const desc = document.createElement('div'); desc.className = 'desc';
+  desc.textContent = sp._raw ? flavorFromRaw(sp._raw, lang) : '';
+
+  info.append(meta, desc);
+
+  // Type badge: inline SVG symbol (no circle) + name tag below
+  const badge = document.createElement('div'); badge.className = 'type-badge';
+  const mainType = pd.types?.[0] || 'normal';
+  const iconColor = typeColor(mainType);
+  const iconWrap = document.createElement('div'); iconWrap.className = 'type-icon-wrap';
+  const svgText = await fetchTypeIcon(mainType);
+  let svgInserted = false;
+  if(svgText){
+    try{
+      const svgDoc = (new DOMParser()).parseFromString(svgText, 'image/svg+xml');
+      const svgEl = svgDoc.documentElement;
+      if(svgEl.tagName.toLowerCase() === 'svg' && !svgEl.querySelector('parsererror')){
+        // Color elements inline (no <style> tag — prevents cross-card leaking)
+        svgEl.querySelectorAll('circle').forEach(c => { c.style.display = 'none'; });
+        svgEl.querySelectorAll('path,polygon,polyline,ellipse,rect').forEach(s => { s.style.fill = iconColor; });
+        svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
+        svgEl.style.cssText = 'display:block;flex-shrink:0;';
+        iconWrap.appendChild(document.importNode(svgEl, true));
+        svgInserted = true;
+      }
+    }catch(_){}
+  }
+  if(!svgInserted){
+    const fb = document.createElement('div'); fb.className = 'type-icon-fallback';
+    fb.textContent = mainType[0].toUpperCase(); fb.style.background = iconColor;
+    iconWrap.appendChild(fb);
+  }
+  const nameTag = document.createElement('div'); nameTag.className = 'type-name-tag';
+  nameTag.textContent = mainType.toUpperCase();
+  nameTag.style.color = iconColor;
+  iconWrap.appendChild(nameTag);
+  badge.appendChild(iconWrap);
+
+  card.append(head, core, ...(ids.length > 1 ? [evo] : []), info);
+  head.querySelector('.right').appendChild(badge);
+  return card;
+}
+
+async function renderCards(list){
+  const cols = +v('cardCols'), rows = +v('cardRows'), gap = +v('cardGap'), pad = +v('cardsPad');
+  const cardPad = +v('cardPad'), style = v('style'), lang = 'en';
+  const paging = v('cardsPaging'), textMode = v('textMode');
+
+  setVar('--pad-cards', pad+'px');
+  setVar('--card-cols', cols);
+  setVar('--card-rows', rows);
+  if(gap >= 0){ setVar('--card-gap', gap+'px'); setVar('--card-gap-abs','0px'); }
+  else { setVar('--card-gap','0px'); setVar('--card-gap-abs', Math.abs(gap)+'px'); }
+  setVar('--card-pad', cardPad+'px');
+  setVar('--sprite-shift-y', v('spriteY')+'px');
+
+  const evoOn = el('evoBoxOn').checked;
+  const evoScale = parseFloat(el('evoBoxScale').value) || 0.6;
+  setVar('--evo-box-scale', evoScale);
+  setVar('--evo-box-bg', evoOn ? el('evoBoxColor').value : 'transparent');
+  setVar('--evo-box-border', evoOn ? el('evoBorderColor').value : 'transparent');
+  setVar('--evo-fill', v('evoFill'));
+  setVar('--evo-stroke', v('evoStroke'));
+  setVar('--card-box-bg', v('cardBoxBg'));
+  setVar('--card-box-ink', v('cardBoxInk'));
+
+  setVar('--head-fz', v('cHead')+'px');
+  setVar('--meta-fz', v('cMeta')+'px');
+  setVar('--meta-label-fz', v('metaLabelSize')+'px');
+  setVar('--meta-value-fz', v('metaValueSize')+'px');
+  setVar('--desc-fz', v('cDesc')+'px');
+  setVar('--meta-gap', v('metaGap')+'px');
+
+  const dims = cardDims(cols, rows, pad, gap);
+  setVar('--card-w', dims.w+'px');
+  setVar('--card-h', dims.h+'px');
+
+  const baseMini = +v('miniSize') || 56;
+  setVar('--mini', Math.round(dims.w * (baseMini / 760)) + 'px');
+
+  const imgSz = spriteSize(dims.w - cardPad*2, dims.h - cardPad*2, style);
+  setVar('--img', imgSz+'px');
+
+  const gens = new Set(list.map(x => x.generation).filter(Boolean));
+
+  const perPage = cols * rows;
+  const root = el('root');
+  root.innerHTML = '';
+
+  async function renderPage(pageIds){
+    const page = document.createElement('div'); page.className = 'page cards';
+    const inner = document.createElement('div'); inner.className = 'inner';
+    const grid = document.createElement('div');
+    grid.className = 'grid' + (gap<0 ? ' neg-gap' : '');
+
+    for(const id of pageIds){
+      grid.appendChild(await renderCard(id, style, lang, textMode, true));
+    }
+    for(let k = 0; k < perPage - pageIds.length; k++){
+      const ph = document.createElement('div'); ph.className = 'card placeholder';
+      grid.appendChild(ph);
+    }
+    inner.appendChild(grid);
+    page.appendChild(inner);
+    root.appendChild(page);
+    await preloadImages(page);
+  }
+
+  if(paging === 'evolution'){
+    const chains = await buildChainsFromList(list);
+    const start = Math.max(1, parseInt(v('chainStart'),10)||1) - 1;
+    const count = Math.max(1, parseInt(v('chainCount'),10)||10);
+    const allIds = chains.slice(start, start+count).flatMap(ch => ch.ids);
+    for(const pageIds of chunk(allIds, perPage)){
+      await renderPage(pageIds);
+    }
+  } else {
+    const chunks = chunk(list.map(x=>x.id), perPage);
+    for(const pageIds of (chunks.length ? chunks : [[]])){
+      await renderPage(pageIds);
+    }
+  }
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  10. BUILD ORCHESTRATOR           ║
+// ╚══════════════════════════════════╝
+async function build(){
+  showLoading();
+  try{
+    await readyFonts();
+    setVar('--zoom', v('zoom'));
+
+    const ids = parseIds(el('specificIds').value);
+    const selectedTypes = [...document.querySelectorAll('#typeFilter .type-pill.active')].map(p => p.dataset.type);
+    let list;
+    if(ids.length){
+      list = await resolveListFromIds(ids);
+    } else {
+      const gen = v('gen');
+      let full = (gen==='all') ? await allSpecies() : await genSpecies(gen);
+
+      // Type filter: fetch PokeAPI type data and intersect
+      if(selectedTypes.length){
+        const [minId, maxId] = GEN_ID_RANGES[gen] || [1, 1010];
+        const typeData = await Promise.all(selectedTypes.map(t => cachedFetch(`https://pokeapi.co/api/v2/type/${t}/`)));
+        const typeIds = new Set();
+        for(const td of typeData){
+          for(const p of td.pokemon){
+            const pid = +p.pokemon.url.split('/').slice(-2,-1)[0];
+            if(pid >= minId && pid <= maxId) typeIds.add(pid);
+          }
+        }
+        full = full.filter(pk => typeIds.has(pk.id));
+      }
+
+      if(MODE.get() === 'cards'){
+        const perPage = Math.max(1, +v('cardCols')) * Math.max(1, +v('cardRows'));
+        list = full.slice(0, perPage);
+      } else {
+        list = full;
+      }
+    }
+
+    // Sort by type if requested
+    if(v('sortBy') === 'type' && list.length){
+      const typeData = await Promise.all(list.map(pk => pokemonData(pk.id).catch(() => ({types:['normal']}))));
+      const typeMap = new Map(list.map((pk, i) => [pk.id, typeData[i].types?.[0] || 'normal']));
+      list = [...list].sort((a, b) => typeIdx(typeMap.get(a.id)) - typeIdx(typeMap.get(b.id)) || a.id - b.id);
+    }
+
+    if(MODE.get() === 'poster') await renderPoster(list);
+    else await renderCards(list);
+  } finally {
+    hideLoading();
+  }
+}
+
+
+// ╔══════════════════════════════════╗
+// ║  11. EVENT WIRING                 ║
+// ╚══════════════════════════════════╝
+[
+  'gen','style','pxScale','snapInt','zoom','specificIds','sortBy',
+  'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
+  'posterMode','posterFont','capPx','capColor','capOffsetX','capOffsetY',
+  'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle',
+  'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
+  'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
+  'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
+].forEach(id => el(id).addEventListener('input', debouncedBuild));
+
+function syncPosterUI(){
+  const mode = v('posterMode') || 'image';
+  const isImage = mode !== 'grid';   // image and scatter both have offset controls
+  const isCustom = parseIds(el('specificIds').value).length > 0 || false;
+  el('capOffsetXRow').style.display = isImage ? '' : 'none';
+  el('capOffsetYRow').style.display = isImage ? '' : 'none';
+}
+el('posterMode').addEventListener('change', () => { syncPosterUI(); });
+el('specificIds').addEventListener('input', syncPosterUI);
+syncPosterUI();
+
+function syncBestFitUI(){
+  const on = el('posterBestFit').checked;
+  el('posterGridSizeWrap').style.display = on ? 'none' : 'contents';
+}
+el('posterBestFit').addEventListener('change', syncBestFitUI);
+syncBestFitUI();
+
+function updateRandomLabel(){
+  const n = Math.max(1, parseInt(v('posterCols') || 9) * parseInt(v('posterRows') || 13));
+  el('randomIdsBtn').textContent = `🎲 ${n} Random`;
+  el('randomIdsBtn').title = `Pick ${n} random Pokémon (cols × rows)`;
+}
+el('posterCols').addEventListener('input', updateRandomLabel);
+el('posterRows').addEventListener('input', updateRandomLabel);
+el('posterBestFit').addEventListener('change', updateRandomLabel);
+updateRandomLabel();
+
+el('posterImagePreset').addEventListener('change', () => {
+  if(!el('posterImagePreset').checked) return;
+  el('posterMode').value = 'image';
+  el('posterBestFit').checked = false;
+  el('posterCols').value = '9';
+  el('posterRows').value = '17';
+  el('posterGapX').value = '-2000';
+  el('posterGapY').value = '-500';
+  el('posterPad').value = '250';
+  el('posterShowCaption').checked = false;
+  el('posterShowTitle').checked = true;
+  syncPosterUI();
+  syncBestFitUI();
+  debouncedBuild();
+});
+
+el('randomIdsBtn').addEventListener('click', async () => {
+  const selectedTypes = [...document.querySelectorAll('#typeFilter .type-pill.active')].map(p => p.dataset.type);
+  let pool;
+  if(selectedTypes.length){
+    const gen = v('gen');
+    const [minId, maxId] = GEN_ID_RANGES[gen] || [1, 1010];
+    const typeData = await Promise.all(selectedTypes.map(t => cachedFetch(`https://pokeapi.co/api/v2/type/${t}/`)));
+    const typeIds = new Set();
+    for(const td of typeData){
+      for(const p of td.pokemon){
+        const pid = +p.pokemon.url.split('/').slice(-2,-1)[0];
+        if(pid >= minId && pid <= maxId) typeIds.add(pid);
+      }
+    }
+    pool = [...typeIds];
+  } else {
+    pool = Array.from({length: 1010}, (_, i) => i + 1);
+  }
+  // Shuffle pool and take 150
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const n = Math.max(1, parseInt(v('posterCols') || 9) * parseInt(v('posterRows') || 13));
+  const picks = pool.slice(0, Math.min(n, pool.length));
+  el('specificIds').value = picks.sort((a,b) => a-b).join(', ');
+  debouncedBuild();
+});
+el('cleanBtn').addEventListener('click', () => {
+  el('specificIds').value = '';
+  debouncedBuild();
+});
+
+el('printBtn').addEventListener('click', async () => {
+  await readyFonts();
+  for(const p of document.querySelectorAll('.page')) await preloadImages(p);
+  window.print();
+});
+
+el('downloadBtn').addEventListener('click', async () => {
+  await readyFonts();
+  const page = document.querySelector('.page');
+  if(!page) return;
+  document.body.dataset.exporting = '1';
+  await preloadImages(page);
+  const canvas = await html2canvas(page, { scale:3, useCORS:true, backgroundColor:'#ffffff' });
+  document.body.removeAttribute('data-exporting');
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'page.png';
+  a.click();
+});
+
+el('buildBtn').addEventListener('click', build);
+
+
+// ╔══════════════════════════════════╗
+// ║  12. INIT                         ║
+// ╚══════════════════════════════════╝
+MODE.set('cards');
+
+</script>
+</body>
+</html>
