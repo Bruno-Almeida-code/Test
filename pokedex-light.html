@@ -525,6 +525,12 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+/* Title-right layout: title sits in the flex flow below the grid, right-aligned */
+.poster.title-side .poster-title{
+  position: static;
+  justify-content: flex-end;
+  padding: 16px 30px 16px 20px;
+}
 .poster-grid{
   flex: 1;
   display: grid;
@@ -1039,6 +1045,13 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
               <div class="toggle-track"></div>
             </div>
             Show title
+          </label>
+          <label style="flex-direction:row;gap:8px;align-items:center">
+            <div class="toggle">
+              <input id="posterTitleRight" type="checkbox">
+              <div class="toggle-track"></div>
+            </div>
+            Title right
           </label>
           <label style="flex-direction:row;gap:8px;align-items:center">
             <div class="toggle">
@@ -1762,10 +1775,11 @@ async function renderPoster(list){
   setVar('--cap-offset-x', v('capOffsetX')+'px');
   setVar('--poster-title-font', `"${v('posterFont') || 'VT323'}"`);
 
-  const showCaption = el('posterShowCaption').checked;
-  const showTitle   = el('posterShowTitle').checked;
-  const posterMode  = v('posterMode') || 'image';
-  const blueNoise   = el('posterBlueNoise').checked;
+  const showCaption  = el('posterShowCaption').checked;
+  const showTitle    = el('posterShowTitle').checked;
+  const titleRight   = el('posterTitleRight').checked;
+  const posterMode   = v('posterMode') || 'image';
+  const blueNoise    = el('posterBlueNoise').checked;
 
   // Detect multi-region: custom IDs spanning >1 generation, or gen=all
   const gen = v('gen');
@@ -1861,7 +1875,7 @@ async function renderPoster(list){
 
     page.appendChild(inner);
 
-    // Title: absolute on page, always within page bounds regardless of grid overflow
+    // Title: default = absolute overlay at bottom-centre; titleRight = in-flow at bottom-right
     if(pi === 0 && showTitle){
       const title = document.createElement('div'); title.className = 'poster-title';
       if(isCustomList){
@@ -1878,7 +1892,12 @@ async function renderPoster(list){
           </div>
           <div class="title-desc-wrap">${regionDesc}</div>`;
       }
-      page.appendChild(title);
+      if(titleRight){
+        page.classList.add('title-side');
+        inner.appendChild(title);   // in flex flow → no overlap with grid
+      } else {
+        page.appendChild(title);    // absolute overlay (default)
+      }
     }
     root.appendChild(page);
     await preloadImages(page);
@@ -2129,7 +2148,7 @@ async function build(){
   'gen','style','pxScale','snapInt','specificIds','sortBy',
   'posterCols','posterRows','posterBestFit','posterGapX','posterGapY','posterPad',
   'posterMode','posterFont','capPx','capColor','capOffsetX','capOffsetY',
-  'posterShowCaption','posterShowTitle','posterBlueNoise','posterCustomTitle',
+  'posterShowCaption','posterShowTitle','posterTitleRight','posterBlueNoise','posterCustomTitle',
   'cardCols','cardRows','cardGap','cardsPad','cardsPaging','chainStart','chainCount',
   'cardPad','spriteY','miniSize','evoFill','evoStroke','evoBoxOn','evoBoxScale','evoBoxColor','evoBorderColor',
   'textMode','cHead','cMeta','cDesc','metaGap','metaLabelSize','metaValueSize','cardBoxBg','cardBoxInk'
@@ -2177,6 +2196,7 @@ el('posterImagePreset').addEventListener('change', () => {
       posterPad: el('posterPad').value,
       posterShowCaption: el('posterShowCaption').checked,
       posterShowTitle: el('posterShowTitle').checked,
+      posterTitleRight: el('posterTitleRight').checked,
     };
     el('posterMode').value = 'image';
     el('posterBestFit').checked = false;
@@ -2187,6 +2207,7 @@ el('posterImagePreset').addEventListener('change', () => {
     el('posterPad').value = '250';
     el('posterShowCaption').checked = false;
     el('posterShowTitle').checked = true;
+    el('posterTitleRight').checked = false;
   } else if(_presetSnap){
     // Restore previous settings
     el('posterMode').value = _presetSnap.posterMode;
@@ -2198,6 +2219,7 @@ el('posterImagePreset').addEventListener('change', () => {
     el('posterPad').value = _presetSnap.posterPad;
     el('posterShowCaption').checked = _presetSnap.posterShowCaption;
     el('posterShowTitle').checked = _presetSnap.posterShowTitle;
+    el('posterTitleRight').checked = _presetSnap.posterTitleRight || false;
     _presetSnap = null;
   }
   syncPosterUI();
