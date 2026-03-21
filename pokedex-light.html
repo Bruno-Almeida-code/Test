@@ -137,11 +137,31 @@ body{
   min-width: 0;
   overflow: auto;
   background: var(--panel2);
-  padding: 32px;
+  padding: 32px 32px 20px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
+.page-nav{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+  user-select: none;
+}
+.page-nav button{
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.page-nav button:disabled{ opacity: 0.35; cursor: default; }
+.page-nav button:not(:disabled):hover{ background: var(--panel2); }
 .zoom-bar{
   display: flex;
   align-items: center;
@@ -1145,6 +1165,11 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
         <div id="root"></div>
       </div>
     </div>
+    <div id="pageNav" class="page-nav" style="display:none">
+      <button id="pagePrev" title="Previous page">&#8592;</button>
+      <span id="pageLabel">1 / 1</span>
+      <button id="pageNext" title="Next page">&#8594;</button>
+    </div>
   </main>
 </div>
 
@@ -1211,6 +1236,31 @@ const loader = el('loadingIndicator');
 let buildCount = 0;
 function showLoading(){ buildCount++; loader.classList.add('show'); }
 function hideLoading(){ buildCount--; if(buildCount<=0){ buildCount=0; loader.classList.remove('show'); } }
+
+// ── Card pagination state ──────────────────────────────────────────────────
+let _cardList      = null;  // full resolved list from last cards build
+let _cardPageIdx   = 0;     // currently displayed page (0-based)
+let _cardTotalPages = 0;
+
+function updatePageNav(){
+  const nav = el('pageNav');
+  if(!nav) return;
+  nav.style.display = _cardTotalPages > 1 ? 'flex' : 'none';
+  el('pageLabel').textContent = (_cardPageIdx + 1) + ' / ' + _cardTotalPages;
+  el('pagePrev').disabled = _cardPageIdx === 0;
+  el('pageNext').disabled = _cardPageIdx === _cardTotalPages - 1;
+}
+
+async function gotoPage(i){
+  if(!_cardList || i < 0 || i >= _cardTotalPages) return;
+  _cardPageIdx = i;
+  showLoading();
+  try {
+    await renderCards(_cardList, _cardPageIdx);
+    updateSizer();
+  } finally { hideLoading(); }
+}
+// ──────────────────────────────────────────────────────────────────────────
 
 let buildTimer = null;
 function debouncedBuild(){
@@ -1931,7 +1981,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=
   return card;
 }
 
-async function renderCards(list){
+async function renderCards(list, pageIdx = 0){
   const cols = +v('cardCols'), rows = +v('cardRows'), gap = +v('cardGap'), pad = +v('cardsPad');
   const cardPad = +v('cardPad'), style = v('style'), lang = 'en';
   const paging = v('cardsPaging'), textMode = v('textMode');
@@ -1996,20 +2046,22 @@ async function renderCards(list){
     await preloadImages(page);
   }
 
+  let pageChunks;
   if(paging === 'evolution'){
     const chains = await buildChainsFromList(list);
     const start = Math.max(1, parseInt(v('chainStart'),10)||1) - 1;
     const count = Math.max(1, parseInt(v('chainCount'),10)||10);
     const allIds = chains.slice(start, start+count).flatMap(ch => ch.ids);
-    for(const pageIds of chunk(allIds, perPage)){
-      await renderPage(pageIds);
-    }
+    pageChunks = chunk(allIds, perPage);
   } else {
-    const chunks = chunk(list.map(x=>x.id), perPage);
-    for(const pageIds of (chunks.length ? chunks : [[]])){
-      await renderPage(pageIds);
-    }
+    pageChunks = chunk(list.map(x=>x.id), perPage);
   }
+
+  _cardTotalPages = pageChunks.length || 1;
+  _cardPageIdx    = Math.max(0, Math.min(pageIdx, _cardTotalPages - 1));
+  updatePageNav();
+
+  await renderPage(pageChunks[_cardPageIdx] || []);
 }
 
 
@@ -2045,12 +2097,7 @@ async function build(){
         full = full.filter(pk => typeIds.has(pk.id));
       }
 
-      if(MODE.get() === 'cards'){
-        const perPage = Math.max(1, +v('cardCols')) * Math.max(1, +v('cardRows'));
-        list = full.slice(0, perPage);
-      } else {
-        list = full;
-      }
+      list = full;
     }
 
     // Sort by type if requested
@@ -2060,8 +2107,14 @@ async function build(){
       list = [...list].sort((a, b) => typeIdx(typeMap.get(a.id)) - typeIdx(typeMap.get(b.id)) || a.id - b.id);
     }
 
-    if(MODE.get() === 'poster') await renderPoster(list);
-    else await renderCards(list);
+    if(MODE.get() === 'poster'){
+      el('pageNav').style.display = 'none';
+      await renderPoster(list);
+    } else {
+      _cardList = list;
+      _cardPageIdx = 0;
+      await renderCards(list, 0);
+    }
     updateSizer();
   } finally {
     hideLoading();
@@ -2384,6 +2437,8 @@ function fitZoom(){
 }
 
 // Zoom slider
+el('pagePrev').addEventListener('click', () => gotoPage(_cardPageIdx - 1));
+el('pageNext').addEventListener('click', () => gotoPage(_cardPageIdx + 1));
 el('zoom').addEventListener('input', () => applyZoom(+el('zoom').value));
 el('zoomOut').addEventListener('click', () => applyZoom(+el('zoom').value - 0.05));
 el('zoomIn').addEventListener('click',  () => applyZoom(+el('zoom').value + 0.05));
