@@ -1839,7 +1839,7 @@ async function renderPoster(list){
 // ╔══════════════════════════════════╗
 // ║  9. RENDER: CARD + CARDS          ║
 // ╚══════════════════════════════════╝
-async function renderCard(pkId, style, lang, textMode, showRegion=true){
+async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=true){
   const sp = await speciesById(pkId);
   const pd = await pokemonData(pkId).catch(() => ({types:[], abilities:[]}));
 
@@ -1926,7 +1926,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true){
   iconWrap.appendChild(nameTag);
   badge.appendChild(iconWrap);
 
-  card.append(head, core, ...(ids.length > 1 ? [evo] : []), info);
+  card.append(head, core, ...(showEvo && ids.length > 1 ? [evo] : []), info);
   head.querySelector('.right').appendChild(badge);
   return card;
 }
@@ -1984,7 +1984,7 @@ async function renderCards(list){
     grid.className = 'grid' + (gap<0 ? ' neg-gap' : '');
 
     for(const id of pageIds){
-      grid.appendChild(await renderCard(id, style, lang, textMode, true));
+      grid.appendChild(await renderCard(id, style, lang, textMode, true, paging !== 'evolution'));
     }
     for(let k = 0; k < perPage - pageIds.length; k++){
       const ph = document.createElement('div'); ph.className = 'card placeholder';
