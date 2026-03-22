@@ -130,19 +130,15 @@ body{
   align-items: flex-end;
 }
 
-/* ── Row 2: section dropdowns — LEFT aligned ── */
+/* ── Row 2: section dropdowns + export (right-aligned) ── */
 .topbar-sections{
   border-bottom: 1px solid var(--border);
   position: relative;
 }
 .topbar-sections .topbar-inner{
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-start;
-}
-
-/* ── Row 3: export actions ── */
-.topbar-export{
-  border-bottom: 1px solid var(--border);
+  align-items: stretch;
 }
 
 .stage-wrap{
@@ -302,7 +298,11 @@ summary::after{
   flex-shrink: 0;
 }
 details[open] > summary::after{ transform: rotate(-135deg); }
-details.section[open] > summary{ color: var(--text); }
+details.section[open] > summary{
+  color: var(--text);
+  background: var(--panel2);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
 summary:hover{ color: var(--text); background: var(--panel2); }
 
 /* Dropdown panel opens downward */
@@ -312,6 +312,8 @@ summary:hover{ color: var(--text); background: var(--panel2); }
   left: 0;
   z-index: 1000;
   min-width: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
   background: var(--panel);
   border: 1px solid var(--border);
   border-top: none;
@@ -329,19 +331,19 @@ summary:hover{ color: var(--text); background: var(--panel2); }
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  align-items: flex-end;
-  margin: 6px 0;
+  align-items: flex-start;   /* top-align labels+inputs */
+  margin: 8px 0;
 }
 label{
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   font: 500 11px/1.3 'Poppins', sans-serif;
   color: var(--muted);
 }
 input[type="number"], input[type="text"], select, textarea{
   font: 500 13px/1 'Poppins', sans-serif;
-  border-radius: 0;
+  border-radius: 4px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
@@ -466,53 +468,50 @@ input[type="range"]{
 .btn.primary:hover{ background: #333; border-color: #333; }
 
 small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; margin: 4px 0; }
-
+/* Export actions — inside sections row, margin-left:auto pushes right */
 .actions-bar{
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 16px;
+  padding: 0 14px;
+  margin-left: auto;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
 }
-.actions-label{
+/* BUILD — filled accent */
+.actions-bar #buildBtn{
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 5px;
+  border: none;
+  background: var(--text);
+  color: var(--bg);
   font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--muted);
-  padding-right: 10px;
-  border-right: 1px solid var(--border);
-  margin-right: 4px;
-  opacity: .6;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: background .15s;
 }
-/* Export row buttons — all same minimal plain style */
-.topbar-export .btn,
-.topbar-export .btn.primary{
-  height: auto;
-  padding: 5px 12px;
-  border-radius: 4px;
+.actions-bar #buildBtn:hover{ background: #333; }
+/* PDF / PNG — outlined secondary */
+.actions-bar .btn.secondary{
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 5px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
   font-family: 'Bebas Neue', impact, sans-serif;
   font-size: 12px;
-  font-weight: 400;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  gap: 5px;
-  transform: none;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+  transition: background .15s, color .15s;
 }
-.topbar-export .btn .btn-icon{
-  font-size: 8px;
-  opacity: .65;
-  line-height: 1;
-}
-.topbar-export .btn:hover,
-.topbar-export .btn.primary:hover{
-  background: var(--panel2);
-  color: var(--text);
-  border-color: #bbb;
-}
-.topbar-export .btn:active{ transform: scale(0.97); }
+.actions-bar .btn.secondary:hover{ background: var(--panel2); color: var(--text); }
 
 
 /* ╔══════════════════════════════════╗
@@ -988,10 +987,10 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
         </div>
         <div class="zoom-bar">
           <button class="zoom-step" id="zoomOut" title="Zoom out">−</button>
-          <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
+          <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35" style="display:none">
           <span id="zoomVal">35%</span>
           <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
-          <button class="zoom-step" id="zoomFit" title="Fit to window">↔ Fit</button>
+          <button class="zoom-step" id="zoomFit" title="Fit to window">Fit</button>
         </div>
       </div>
     </div>
@@ -1050,9 +1049,11 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
           <button id="cleanBtn" title="Reset to default" style="align-self:flex-end;margin-bottom:2px">✕ Clean</button>
         </div>
         <div class="row" style="flex-wrap:wrap;gap:6px;align-items:center">
-          <span style="font-size:12px;color:var(--muted);min-width:80px">Type filter</span>
-          <div id="typeFilter" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-          <button id="clearTypesBtn" style="font-size:11px;padding:2px 8px;margin-left:4px">Clear</button>
+          <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+            Type filter
+            <button id="clearTypesBtn" title="Clear type filter" style="font-size:11px;padding:1px 5px;border:1px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--muted);line-height:1">×</button>
+          </span>
+          <div id="typeFilter" style="display:flex;flex-wrap:wrap;gap:4px;row-gap:8px"></div>
         </div>
         <div class="row" style="gap:8px;align-items:center">
           <button id="addAllTypeBtn" style="font-size:11px;padding:3px 10px">Add all selected types</button>
@@ -1239,20 +1240,15 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       </div>
     </details>
 
+      <!-- ══════ EXPORT (right side of sections row) ══════ -->
+      <div class="actions-bar">
+        <button class="btn primary" id="buildBtn">&#x25B6;&#xFE0E; Build</button>
+        <button class="btn secondary" id="printBtn">⎙ PDF</button>
+        <button class="btn secondary" id="downloadBtn">↓ PNG</button>
+      </div>
+
       </div><!-- end .topbar-inner -->
     </div><!-- end .topbar-sections -->
-
-    <!-- ══════ ROW 3: EXPORT ══════ -->
-    <div class="topbar-export">
-      <div class="topbar-inner">
-        <div class="actions-bar">
-          <span class="actions-label">Export</span>
-          <button class="btn primary" id="buildBtn"><span class="btn-icon">&#x25B6;&#xFE0E;</span> Build</button>
-          <button class="btn" id="printBtn"><span class="btn-icon">⎙</span> PDF</button>
-          <button class="btn" id="downloadBtn"><span class="btn-icon">↓</span> PNG</button>
-        </div>
-      </div>
-    </div>
 
   </aside>
 
@@ -2560,6 +2556,17 @@ document.addEventListener('click', e => {
     document.querySelectorAll('.topbar-sections details[open]')
       .forEach(d => d.removeAttribute('open'));
   }
+});
+
+// Accordion: opening one section auto-closes all others
+document.querySelectorAll('.topbar-sections .section').forEach(det => {
+  det.addEventListener('toggle', () => {
+    if(det.open){
+      document.querySelectorAll('.topbar-sections .section').forEach(other => {
+        if(other !== det) other.removeAttribute('open');
+      });
+    }
+  });
 });
 
 MODE.set('cards');
