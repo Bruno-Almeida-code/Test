@@ -124,16 +124,20 @@ body{
 /* ── Row 1: tabs + zoom ── */
 .topbar-main{
   border-bottom: 1px solid var(--border);
+  padding-top: 6px;
+}
+.topbar-main .topbar-inner{
+  align-items: flex-end;
 }
 
-/* ── Row 2: section dropdowns ── */
+/* ── Row 2: section dropdowns — LEFT aligned ── */
 .topbar-sections{
   border-bottom: 1px solid var(--border);
   position: relative;
 }
 .topbar-sections .topbar-inner{
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* ── Row 3: export actions ── */
@@ -176,8 +180,10 @@ body{
   align-items: center;
   gap: 6px;
   padding: 0 14px;
-  border-right: 1px solid var(--border);
-  margin-left: auto;
+  border-left: 1px solid var(--border);
+  margin-left: 4px;
+  align-self: center;
+  margin-bottom: 2px;
 }
 .zoom-step{
   width: 24px; height: 24px;
@@ -207,24 +213,21 @@ body{
 
 
 /* ╔══════════════════════════════════╗
-   ║  4. TABS                         ║
+   ║  4. TABS  (file/folder style)    ║
    ╚══════════════════════════════════╝ */
 .tabs{
   display: flex;
-  align-items: stretch;
-  gap: 0;
+  align-items: flex-end;
+  gap: 3px;
   padding: 0;
-  background: transparent;
-  border-radius: 0;
-  border: none;
 }
 .tab{
   display: flex;
   align-items: center;
-  padding: 0 22px;
-  border-radius: 0;
-  border: none;
-  border-right: 1px solid var(--border);
+  padding: 7px 22px 8px;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
   background: var(--panel);
   color: var(--muted);
   cursor: pointer;
@@ -234,14 +237,23 @@ body{
   letter-spacing: 2px;
   text-transform: uppercase;
   white-space: nowrap;
-  transition: color .15s, background .15s;
+  position: relative;
+  margin-bottom: -1px;   /* overlap the row's border-bottom */
+  z-index: 1;
+  transition: color .15s, background .15s, opacity .15s;
 }
-.tab:first-child{ border-left: 1px solid var(--border); }
-.tab:hover{ color: var(--text); background: var(--panel2); }
+/* inactive tabs slightly shorter — file-behind effect */
+.tab:not(.active){
+  padding-top: 5px;
+  padding-bottom: 6px;
+  opacity: .6;
+}
+.tab:hover{ color: var(--text); opacity: 1; }
 .tab.active{
   background: var(--panel);
   color: var(--text);
-  box-shadow: inset 0 -2px 0 var(--text);
+  /* bottom covers the row border-bottom so tab "opens" into content */
+  box-shadow: 0 1px 0 0 var(--panel);
 }
 
 
@@ -458,9 +470,8 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
 .actions-bar{
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 0 16px;
-  border-right: 1px solid var(--border);
+  gap: 6px;
+  padding: 6px 16px;
 }
 .actions-label{
   font-family: 'Bebas Neue', impact, sans-serif;
@@ -473,35 +484,35 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   margin-right: 4px;
   opacity: .6;
 }
-/* Top-bar action buttons: small, no box, same font as Export label */
-.topbar-main .btn{
+/* Export row buttons — all same minimal plain style */
+.topbar-export .btn,
+.topbar-export .btn.primary{
   height: auto;
-  padding: 4px 8px;
+  padding: 5px 12px;
   border-radius: 4px;
-  border: none;
+  border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
   font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  gap: 4px;
+  gap: 5px;
   transform: none;
 }
-.topbar-main .btn .btn-icon{
-  font-size: 7px;
-  opacity: .7;
+.topbar-export .btn .btn-icon{
+  font-size: 8px;
+  opacity: .65;
   line-height: 1;
 }
-.topbar-main .btn:hover{ background: var(--panel2); color: var(--text); border-color: unset; }
-.topbar-main .btn:active{ transform: none; }
-/* Build: slightly more prominent */
-.topbar-main .btn.primary{
-  background: transparent;
+.topbar-export .btn:hover,
+.topbar-export .btn.primary:hover{
+  background: var(--panel2);
   color: var(--text);
+  border-color: #bbb;
 }
-.topbar-main .btn.primary:hover{ background: var(--panel2); color: var(--text); }
+.topbar-export .btn:active{ transform: scale(0.97); }
 
 
 /* ╔══════════════════════════════════╗
