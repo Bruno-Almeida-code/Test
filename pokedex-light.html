@@ -116,7 +116,6 @@ body{
 .topbar-main{
   display: flex;
   align-items: stretch;
-  justify-content: center;
   gap: 0;
   padding: 0;
   border-bottom: 1px solid var(--border);
@@ -167,6 +166,7 @@ body{
   gap: 6px;
   padding: 0 14px;
   border-right: 1px solid var(--border);
+  margin-left: auto;
 }
 .zoom-step{
   width: 24px; height: 24px;
@@ -210,7 +210,7 @@ body{
 .tab{
   display: flex;
   align-items: center;
-  padding: 0 18px;
+  padding: 0 22px;
   border-radius: 0;
   border: none;
   border-right: 1px solid var(--border);
@@ -218,9 +218,9 @@ body{
   color: var(--muted);
   cursor: pointer;
   font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 400;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   white-space: nowrap;
   transition: color .15s, background .15s;
@@ -228,9 +228,9 @@ body{
 .tab:first-child{ border-left: 1px solid var(--border); }
 .tab:hover{ color: var(--text); background: var(--panel2); }
 .tab.active{
-  background: var(--panel2);
+  background: var(--panel);
   color: var(--text);
-  box-shadow: none;
+  box-shadow: inset 0 -2px 0 var(--text);
 }
 
 
@@ -462,7 +462,7 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   margin-right: 4px;
   opacity: .6;
 }
-/* Top-bar action buttons: small, no box */
+/* Top-bar action buttons: small, no box, same font as Export label */
 .topbar-main .btn{
   height: auto;
   padding: 4px 8px;
@@ -473,14 +473,19 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
   font-family: 'Bebas Neue', impact, sans-serif;
   font-size: 11px;
   font-weight: 400;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  gap: 5px;
+  gap: 4px;
   transform: none;
+}
+.topbar-main .btn .btn-icon{
+  font-size: 7px;
+  opacity: .7;
+  line-height: 1;
 }
 .topbar-main .btn:hover{ background: var(--panel2); color: var(--text); border-color: unset; }
 .topbar-main .btn:active{ transform: none; }
-/* Build: slightly more prominent but still no box */
+/* Build: slightly more prominent */
 .topbar-main .btn.primary{
   background: transparent;
   color: var(--text);
@@ -969,9 +974,9 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
 
       <div class="actions-bar">
         <span class="actions-label">Export</span>
-        <button class="btn primary" id="buildBtn">&#x25B6;&#xFE0E; Build</button>
-        <button class="btn" id="printBtn">⎙ PDF</button>
-        <button class="btn" id="downloadBtn">↓ PNG</button>
+        <button class="btn primary" id="buildBtn"><span class="btn-icon">&#x25B6;&#xFE0E;</span> Build</button>
+        <button class="btn" id="printBtn"><span class="btn-icon">⎙</span> PDF</button>
+        <button class="btn" id="downloadBtn"><span class="btn-icon">↓</span> PNG</button>
       </div>
     </div>
 
