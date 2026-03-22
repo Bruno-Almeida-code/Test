@@ -446,35 +446,46 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
 
 .actions-bar{
   display: flex;
-  align-items: stretch;
-  gap: 0;
-}
-/* Top-bar buttons take on the same section-tab look */
-.topbar-main .btn{
-  height: auto;
-  padding: 0 18px;
-  border-radius: 0;
-  border: none;
+  align-items: center;
+  gap: 2px;
+  padding: 0 16px;
   border-right: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--muted);
+}
+.actions-label{
   font-family: 'Bebas Neue', impact, sans-serif;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  gap: 8px;
+  color: var(--muted);
+  padding-right: 10px;
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+  opacity: .6;
+}
+/* Top-bar action buttons: small, no box */
+.topbar-main .btn{
+  height: auto;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Bebas Neue', impact, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  gap: 5px;
   transform: none;
 }
-.topbar-main .btn:hover{ background: var(--panel2); color: var(--text); border-right: 1px solid var(--border); }
+.topbar-main .btn:hover{ background: var(--panel2); color: var(--text); border-color: unset; }
 .topbar-main .btn:active{ transform: none; }
-/* Build: grey highlight (not black) */
+/* Build: slightly more prominent but still no box */
 .topbar-main .btn.primary{
-  background: var(--panel2);
-  border-right: 1px solid var(--border);
+  background: transparent;
   color: var(--text);
 }
-.topbar-main .btn.primary:hover{ background: var(--border); color: var(--text); border-right: 1px solid var(--border); }
+.topbar-main .btn.primary:hover{ background: var(--panel2); color: var(--text); }
 
 
 /* ╔══════════════════════════════════╗
@@ -957,6 +968,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
       </div>
 
       <div class="actions-bar">
+        <span class="actions-label">Export</span>
         <button class="btn primary" id="buildBtn">&#x25B6;&#xFE0E; Build</button>
         <button class="btn" id="printBtn">⎙ PDF</button>
         <button class="btn" id="downloadBtn">↓ PNG</button>
