@@ -115,18 +115,15 @@ body{
 /* ── Top row: tabs + zoom + actions ── */
 .topbar-main{
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 10px 20px;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
   border-bottom: 1px solid var(--border);
 }
 
 /* ── Sections row: dropdown panels ── */
 .topbar-sections{
   display: flex;
-  justify-content: center;
   align-items: stretch;
   flex-wrap: wrap;
   position: relative;
@@ -166,12 +163,13 @@ body{
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0;
+  padding: 0 14px;
+  border-right: 1px solid var(--border);
 }
 .zoom-step{
-  width: 26px; height: 26px;
+  width: 24px; height: 24px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
@@ -181,11 +179,12 @@ body{
   flex-shrink: 0;
 }
 .zoom-step:hover{ background: var(--panel2); }
-#zoom{ width: 100px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+#zoomFit{ width: auto; padding: 0 8px; font-size: 11px; }
+#zoom{ width: 90px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
 #zoomVal{
   font: 500 11px/1 'Poppins', sans-serif;
   color: var(--muted);
-  min-width: 32px;
+  min-width: 28px;
   text-align: center;
 }
 .stage-scroll{ flex: 1; overflow: auto; padding: 32px; }
@@ -199,29 +198,37 @@ body{
    ╚══════════════════════════════════╝ */
 .tabs{
   display: flex;
-  gap: 4px;
-  padding: 3px;
-  background: var(--panel2);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
 }
 .tab{
-  flex: 1;
-  height: 32px;
-  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  border-radius: 0;
   border: none;
-  background: transparent;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
   color: var(--muted);
   cursor: pointer;
-  font: 500 12px/1 'Poppins', sans-serif;
-  transition: all .15s;
-  letter-spacing: .1px;
+  font-family: 'Bebas Neue', impact, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color .15s, background .15s;
 }
-.tab:hover{ color: var(--text); background: rgba(0,0,0,0.04); }
+.tab:first-child{ border-left: 1px solid var(--border); }
+.tab:hover{ color: var(--text); background: var(--panel2); }
 .tab.active{
-  background: var(--panel);
+  background: var(--panel2);
   color: var(--text);
-  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  box-shadow: none;
 }
 
 
@@ -437,8 +444,35 @@ small{ color: var(--muted); font-size: 10px; line-height: 1.4; display: block; m
 
 .actions-bar{
   display: flex;
-  gap: 6px;
+  align-items: stretch;
+  gap: 0;
 }
+/* Top-bar buttons take on the same section-tab look */
+.topbar-main .btn{
+  height: auto;
+  padding: 0 18px;
+  border-radius: 0;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-family: 'Bebas Neue', impact, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  gap: 8px;
+  transform: none;
+}
+.topbar-main .btn:hover{ background: var(--panel2); border-color: unset; border-right: 1px solid var(--border); }
+.topbar-main .btn:active{ transform: none; }
+.topbar-main .btn.primary{
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+  border-right: 1px solid var(--border);
+}
+.topbar-main .btn.primary:hover{ background: #333; border-color: #333; border-right: 1px solid var(--border); }
 
 
 /* ╔══════════════════════════════════╗
@@ -917,7 +951,7 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
         <input id="zoom" type="range" min="0.10" max="1.0" step="0.01" value="0.35">
         <span id="zoomVal">35%</span>
         <button class="zoom-step" id="zoomIn" title="Zoom in">+</button>
-        <button class="zoom-step" id="zoomFit" title="Fit to window" style="width:auto;padding:0 8px;font-size:11px">↔ Fit</button>
+        <button class="zoom-step" id="zoomFit" title="Fit to window">↔ Fit</button>
       </div>
 
       <div class="actions-bar">
