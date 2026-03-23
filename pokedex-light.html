@@ -769,10 +769,41 @@ img.poke{
   object-fit: contain;
   display: block;
 }
-img.poke.realist{
-  object-fit: cover;
-  border-radius: 6px;
+/* --- Realist mode: full-bleed photo, white text, no sprite --- */
+.card[data-realist]{
+  background-size: cover;
+  background-position: center;
+  border: none;
 }
+/* gradient scrim: dark at top (for head) + dark at bottom (for info) */
+.card[data-realist]::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,.50) 0%,
+    rgba(0,0,0,.10) 30%,
+    rgba(0,0,0,.10) 55%,
+    rgba(0,0,0,.70) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+.card[data-realist] .head{
+  z-index: 2;
+  color: #ffffff;
+}
+.card[data-realist] .info{
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  color: #ffffff;
+  padding-bottom: calc(var(--card-pad) * 1.6);
+}
+.card[data-realist] .meta{ color: rgba(255,255,255,.85); }
+.card[data-realist] .ab-tag{ background: rgba(255,255,255,.18); }
 img.poke.pixel{
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -2082,7 +2113,13 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=
   iconWrap.appendChild(nameTag);
   badge.appendChild(iconWrap);
 
-  card.append(head, core, ...(showEvo && ids.length > 1 ? [evo] : []), info);
+  if(style === 'realist'){
+    card.dataset.realist = '1';
+    card.style.backgroundImage = `url('${artURL(pkId, style)}')`;
+    card.append(head, info);
+  } else {
+    card.append(head, core, ...(showEvo && ids.length > 1 ? [evo] : []), info);
+  }
   head.querySelector('.right').appendChild(badge);
   return card;
 }
