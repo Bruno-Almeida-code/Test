@@ -771,6 +771,7 @@ img.poke{
 }
 /* --- Realist mode: full-bleed photo, white text, no sprite --- */
 .card[data-realist]{
+  --card-box-ink: #ffffff;
   background-size: cover;
   background-position: center;
   border: none;
@@ -1710,7 +1711,7 @@ async function resolveListFromIds(ids){
 function artURL(id, style){
   if(style === 'pixel')    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
   if(style === 'home')     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
-  if(style === 'realist')  return `${id}.jpg`; // local files: 1.jpg, 2.jpg … named by Pokémon ID
+  if(style === 'realist')  return `${id}.jpeg`; // local files: 1.jpeg, 2.jpeg … named by Pokémon ID
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 }
 function spriteWrap(url, style){
@@ -2026,7 +2027,24 @@ async function renderPoster(list){
 // ╔══════════════════════════════════╗
 // ║  9. RENDER: CARD + CARDS          ║
 // ╚══════════════════════════════════╝
+
+// Resolves true if the URL returns a loadable image, false otherwise
+function probeImage(url){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload  = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+}
+
 async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=true){
+  // Realist: check whether the local .jpeg exists; fall back to 'art' if not
+  if(style === 'realist'){
+    const found = await probeImage(`${pkId}.jpeg`);
+    if(!found) style = 'art';
+  }
+
   const sp = await speciesById(pkId);
   const pd = await pokemonData(pkId).catch(() => ({types:[], abilities:[]}));
 
@@ -2145,8 +2163,7 @@ async function renderCards(list, pageIdx = 0){
   setVar('--evo-fill', v('evoFill'));
   setVar('--evo-stroke', v('evoStroke'));
   setVar('--card-box-bg', v('cardBoxBg'));
-  // Realist mode: force all card text to white regardless of the ink picker
-  setVar('--card-box-ink', style === 'realist' ? '#ffffff' : v('cardBoxInk'));
+  setVar('--card-box-ink', v('cardBoxInk'));
 
   setVar('--head-fz', v('cHead')+'px');
   setVar('--meta-fz', v('cMeta')+'px');
