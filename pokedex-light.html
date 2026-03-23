@@ -803,7 +803,10 @@ img.poke{
   color: #ffffff;
   padding-bottom: calc(var(--card-pad) * 1.6);
 }
-.card[data-realist] .meta{ color: rgba(255,255,255,.85); }
+.card[data-realist] .meta,
+.card[data-realist] .meta b,
+.card[data-realist] .meta .meta-val,
+.card[data-realist] .desc{ color: rgba(255,255,255,.90); }
 .card[data-realist] .ab-tag{ background: rgba(255,255,255,.18); }
 img.poke.pixel{
   image-rendering: pixelated;
@@ -2102,6 +2105,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=
   const badge = document.createElement('div'); badge.className = 'type-badge';
   const mainType = pd.types?.[0] || 'normal';
   const iconColor = typeColor(mainType);
+  const badgeColor = style === 'realist' ? 'rgba(255,255,255,0.90)' : iconColor;
   const iconWrap = document.createElement('div'); iconWrap.className = 'type-icon-wrap';
   const svgText = await fetchTypeIcon(mainType);
   let svgInserted = false;
@@ -2112,7 +2116,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=
       if(svgEl.tagName.toLowerCase() === 'svg' && !svgEl.querySelector('parsererror')){
         // Color elements inline (no <style> tag — prevents cross-card leaking)
         svgEl.querySelectorAll('circle').forEach(c => { c.style.display = 'none'; });
-        svgEl.querySelectorAll('path,polygon,polyline,ellipse,rect').forEach(s => { s.style.fill = iconColor; });
+        svgEl.querySelectorAll('path,polygon,polyline,ellipse,rect').forEach(s => { s.style.fill = badgeColor; });
         svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
         svgEl.style.cssText = 'display:block;flex-shrink:0;';
         iconWrap.appendChild(document.importNode(svgEl, true));
@@ -2122,12 +2126,12 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=
   }
   if(!svgInserted){
     const fb = document.createElement('div'); fb.className = 'type-icon-fallback';
-    fb.textContent = mainType[0].toUpperCase(); fb.style.background = iconColor;
+    fb.textContent = mainType[0].toUpperCase(); fb.style.background = badgeColor;
     iconWrap.appendChild(fb);
   }
   const nameTag = document.createElement('div'); nameTag.className = 'type-name-tag';
   nameTag.textContent = mainType.toUpperCase();
-  nameTag.style.color = iconColor;
+  nameTag.style.color = badgeColor;
   iconWrap.appendChild(nameTag);
   badge.appendChild(iconWrap);
 
