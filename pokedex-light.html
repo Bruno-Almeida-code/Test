@@ -1883,7 +1883,7 @@ function scatterPositions(n, spriteSize, pad, titleH) {
 async function renderPoster(list){
   let cols = +v('posterCols'), rows = +v('posterRows');
   const gapX = +v('posterGapX'), gapY = +v('posterGapY'), pad = +v('posterPad');
-  const style = v('style');
+  const style = v('style') === 'realist' ? 'pixel' : v('style');
 
   setVar('--pad-poster', pad+'px');
   if(gapY >= 0){ setVar('--poster-row-gap', gapY+'px'); setVar('--poster-neg-row','0px'); }
@@ -2188,6 +2188,12 @@ async function renderCards(list, pageIdx = 0){
 
   const imgSz = spriteSize(dims.w - cardPad*2, dims.h - cardPad*2, style);
   setVar('--img', imgSz+'px');
+
+  // Limited: keep only Pokémon that have a local .jpg available
+  if(style === 'realist'){
+    const avail = await Promise.all(list.map(x => probeImage(`${x.id}.jpg`)));
+    list = list.filter((_, i) => avail[i]);
+  }
 
   const gens = new Set(list.map(x => x.generation).filter(Boolean));
 
