@@ -1717,7 +1717,7 @@ async function resolveListFromIds(ids){
 function artURL(id, style){
   if(style === 'pixel')    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
   if(style === 'home')     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
-  if(style === 'realist')  return `${id}.jpg`; // local files: 1.jpg, 2.jpg … named by Pokémon ID
+  if(style === 'realist')  return `https://brunodealmeida.com/wp-content/uploads/2026/03/${id}.jpg`;
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 }
 function spriteWrap(url, style){
@@ -2049,7 +2049,7 @@ async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=
   if(style === 'realist'){
     if(pkId > 9){ style = 'art'; }
     else{
-      const found = await probeImage(`${pkId}.jpg`);
+      const found = await probeImage(`https://brunodealmeida.com/wp-content/uploads/2026/03/${pkId}.jpg`);
       if(!found) style = 'art';
     }
   }
@@ -2194,7 +2194,7 @@ async function renderCards(list, pageIdx = 0){
 
   // Limited: keep only Pokémon that have a local .jpg available
   if(style === 'realist'){
-    const avail = await Promise.all(list.map(x => probeImage(`${x.id}.jpg`)));
+    const avail = await Promise.all(list.map(x => probeImage(`https://brunodealmeida.com/wp-content/uploads/2026/03/${x.id}.jpg`)));
     list = list.filter((_, i) => avail[i]);
   }
 
