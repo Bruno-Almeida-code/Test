@@ -1714,7 +1714,7 @@ async function resolveListFromIds(ids){
 function artURL(id, style){
   if(style === 'pixel')    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
   if(style === 'home')     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
-  if(style === 'realist')  return `${id}.jpeg`; // local files: 1.jpeg, 2.jpeg … named by Pokémon ID
+  if(style === 'realist')  return `${id}.jpg`; // local files: 1.jpg, 2.jpg … named by Pokémon ID
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 }
 function spriteWrap(url, style){
@@ -2042,9 +2042,9 @@ function probeImage(url){
 }
 
 async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=true){
-  // Realist: check whether the local .jpeg exists; fall back to 'art' if not
+  // Realist: check whether the local .jpg exists; fall back to 'art' if not
   if(style === 'realist'){
-    const found = await probeImage(`${pkId}.jpeg`);
+    const found = await probeImage(`${pkId}.jpg`);
     if(!found) style = 'art';
   }
 
