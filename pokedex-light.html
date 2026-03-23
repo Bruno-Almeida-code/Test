@@ -2042,10 +2042,13 @@ function probeImage(url){
 }
 
 async function renderCard(pkId, style, lang, textMode, showRegion=true, showEvo=true){
-  // Realist: check whether the local .jpg exists; fall back to 'art' if not
+  // Limited: cards only, IDs 1–9; check local .jpg exists; fall back to 'art' otherwise
   if(style === 'realist'){
-    const found = await probeImage(`${pkId}.jpg`);
-    if(!found) style = 'art';
+    if(pkId > 9){ style = 'art'; }
+    else{
+      const found = await probeImage(`${pkId}.jpg`);
+      if(!found) style = 'art';
+    }
   }
 
   const sp = await speciesById(pkId);
