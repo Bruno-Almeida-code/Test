@@ -1059,10 +1059,10 @@ body[data-exporting="1"] .card{ box-shadow: none !important; }
           </label>
           <label>Art style
             <select id="style">
-              <option value="pixel" selected>Pixel (96px)</option>
-              <option value="home">HD (HOME)</option>
+              <option value="pixel" selected>Pixel Art</option>
+              <option value="home">3D</option>
               <option value="art">Official art</option>
-              <option value="realist">Limited (cards only)</option>
+              <option value="realist">Realistic (beta)</option>
             </select>
           </label>
         </div>
@@ -1429,6 +1429,9 @@ const MODE = {
     ['cardsPanel','pagingPanel','layoutPanel','typoPanel'].forEach(id => {
       el(id).style.display = (m==='cards') ? '' : 'none';
     });
+    const realistOpt = el('style').querySelector('option[value="realist"]');
+    if(realistOpt) realistOpt.style.display = (m === 'poster') ? 'none' : '';
+    if(m === 'poster' && v('style') === 'realist') el('style').value = 'pixel';
     build();
   }
 };
